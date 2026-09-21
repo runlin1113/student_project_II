@@ -1,0 +1,8 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# 生成产物与临时文件（属于使用者的项目，不属于本 skill）
+figcheck.png
+_check/
+*.log
