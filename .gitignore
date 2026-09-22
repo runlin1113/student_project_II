@@ -6,3 +6,6 @@ desktop.ini
 # Python caches
 __pycache__/
 *.pyc
+
+# Project-local memory (do not publish)
+.workbuddy/
