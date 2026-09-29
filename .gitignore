@@ -7,5 +7,5 @@ desktop.ini
 __pycache__/
 *.pyc
 
-# Project-local memory (do not publish)
+# Project-local memory / agent state (do not publish)
 .workbuddy/

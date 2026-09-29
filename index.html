@@ -1,12 +1,268 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <title>项目实践2 · 数据模拟文献调研</title>
-  <meta http-equiv="refresh" content="0;url=week3/数据模拟文献调研.html">
-  <script>window.location.href = "week3/数据模拟文献调研.html";</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据模拟文献调研 · 导航门户</title>
+<style>
+  :root{
+    /* 碧落青（azure-cyan） × 乳白（milky white） */
+    --biluo:#1C8CA6; --biluo-deep:#136277; --biluo-soft:#5FB3C4; --biluo-mist:#bfe3ea;
+    --milk:#FAF7F0; --milk-2:#F3EFE6; --ink:#10414f; --sub:#4d727c;
+    --a:#1C8CA6; --b:#2E9E8F; --c:#2A7FA8; --d:#3B8FB0; --e:#15808F;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; color:var(--ink);
+    font-family:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif; line-height:1.6;
+    background:
+      radial-gradient(1100px 700px at 12% -8%, rgba(95,179,196,.30), transparent 60%),
+      radial-gradient(900px 620px at 102% 8%, rgba(28,140,166,.26), transparent 58%),
+      radial-gradient(800px 800px at 60% 118%, rgba(46,158,143,.20), transparent 60%),
+      linear-gradient(135deg, var(--milk) 0%, #eef6f4 48%, var(--milk-2) 100%);
+    background-attachment:fixed; min-height:100vh;
+  }
+  .blob{position:fixed;border-radius:50%;filter:blur(60px);opacity:.5;z-index:0;pointer-events:none}
+  .blob.b1{width:340px;height:340px;left:-90px;top:120px;background:radial-gradient(circle,var(--biluo-soft),transparent 70%)}
+  .blob.b2{width:300px;height:300px;right:-70px;top:300px;background:radial-gradient(circle,var(--biluo),transparent 70%)}
+  .blob.b3{width:260px;height:260px;left:38%;bottom:-110px;background:radial-gradient(circle,#3fae9e,transparent 70%)}
+
+  .wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:54px 26px 70px}
+  h1{font-size:30px;margin:0;letter-spacing:.5px;
+     background:linear-gradient(90deg,var(--biluo-deep),var(--biluo) 55%,#3fae9e);
+     -webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .sub{margin:34px 2px 16px;font-size:15px;font-weight:700;color:var(--biluo-deep)}
+
+  /* 工作思路 */
+  .approach{position:relative;z-index:1;margin-top:22px;border-radius:18px;padding:22px 24px 8px;
+    background:rgba(255,255,255,.42);backdrop-filter:blur(16px) saturate(140%);
+    -webkit-backdrop-filter:blur(16px) saturate(140%);
+    border:1px solid rgba(255,255,255,.65);box-shadow:0 10px 30px rgba(16,80,96,.10);
+    border-left:4px solid var(--biluo)}
+  .approach h2{margin:0 0 14px;font-size:17px;color:var(--biluo-deep);letter-spacing:.5px}
+  .approach ol{margin:0;padding:0 0 14px 20px}
+  .approach li{margin:0 0 11px;font-size:14px;color:#2f5763}
+  .approach li b{color:var(--biluo-deep)}
+
+  /* 平铺网格（无滚轮） */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:24px;margin-top:6px}
+
+  .card{
+    aspect-ratio:3/4;display:flex;flex-direction:column;overflow:hidden;
+    border-radius:22px;background:rgba(255,255,255,.46);
+    backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);
+    border:1px solid rgba(255,255,255,.7);box-shadow:0 10px 34px rgba(16,80,96,.12);
+    transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .card:hover{transform:translateY(-6px);box-shadow:0 18px 44px rgba(16,80,96,.18)}
+
+  .thumb{flex:0 0 47%;position:relative;overflow:hidden;border-bottom:1px solid rgba(28,140,166,.18)}
+  .thumb svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+  .body{flex:1;min-height:0;display:flex;flex-direction:column;gap:7px;padding:14px 16px 16px}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .tag{font-size:11px;font-weight:700;color:#fff;padding:3px 10px;border-radius:8px;width:fit-content;box-shadow:0 3px 10px rgba(16,80,96,.18)}
+  .badge-new{font-size:10.5px;font-weight:800;color:var(--biluo-deep);background:rgba(95,179,196,.28);border:1px solid rgba(28,140,166,.4);padding:2px 8px;border-radius:999px}
+  .tt{font-size:16px;font-weight:800;line-height:1.3;color:var(--ink)}
+  .meta{font-size:11.5px;color:var(--sub)}
+  .desc{font-size:12.5px;color:#3f6270;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .acts{display:flex;gap:9px;margin-top:auto}
+  .btn{font-size:12.5px;font-weight:700;text-decoration:none;cursor:pointer;padding:8px 13px;border-radius:11px;border:1px solid transparent;transition:.15s}
+  .btn.ghost{background:rgba(255,255,255,.55);border-color:rgba(28,140,166,.35);color:var(--biluo-deep)}
+  .btn.ghost:hover{background:rgba(255,255,255,.8)}
+  .btn.primary{background:linear-gradient(135deg,var(--biluo),var(--biluo-deep));color:#fff;box-shadow:0 6px 18px rgba(19,98,119,.32)}
+  .btn.primary:hover{filter:brightness(1.06)}
+
+  .modal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
+         background:rgba(16,65,79,.32);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:24px}
+  .modal.on{display:flex}
+  .mpanel{position:relative;width:min(1180px,94vw);height:min(86vh,880px);border-radius:20px;overflow:hidden;
+          background:rgba(255,255,255,.6);backdrop-filter:blur(22px) saturate(150%);
+          -webkit-backdrop-filter:blur(22px) saturate(150%);
+          border:1px solid rgba(255,255,255,.75);box-shadow:0 30px 80px rgba(16,65,79,.34)}
+  .mhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid rgba(28,140,166,.22)}
+  .mhead .mt{font-size:15px;font-weight:800;color:var(--biluo-deep)}
+  .mclose{cursor:pointer;font-size:13px;font-weight:700;color:#fff;background:var(--biluo);border:none;border-radius:10px;padding:8px 15px}
+  .mclose:hover{background:var(--biluo-deep)}
+  .mpanel iframe{width:100%;height:calc(100% - 56px);border:0;display:block;background:#fff}
+</style>
 </head>
 <body>
-  <p>正在跳转到《数据模拟文献调研》…… 若未自动跳转，请<a href="week3/数据模拟文献调研.html">点击这里</a>。</p>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+
+<div class="wrap">
+  <h1>数据模拟文献调研 · 导航门户</h1>
+
+  <div class="approach">
+    <h2>我的工作思路</h2>
+    <ol>
+      <li><b>一条主线：</b>为组内云模拟器评估搭建文献基础与方法框架。</li>
+      <li><b>统一解读：</b>每篇论文用「五问」拆解（解决什么问题 / 怎么解决 / 为什么有效 / 怎么证明 / 我们的机会点），保证跨论文可比。</li>
+      <li><b>四维方法：</b>以轨迹生成、环境复用、环境生成、基准测评贯穿智能体训练全流程——既标注问题，也对应解法。</li>
+      <li><b>闭环落地：</b>数据集 → 基准 → 指标 → 上线对齐，把「保真度」从宣称变成可量化验证，最终服务组内评测方案。</li>
+    </ol>
+  </div>
+
+  <div class="sub">全部调研网页一览</div>
+
+  <div class="grid">
+
+    <!-- 1 云模拟器 -->
+    <div class="card">
+      <div class="thumb">
+        <svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaf7f9"/><stop offset="1" stop-color="#cfeaf0"/></linearGradient></defs>
+          <rect width="300" height="200" fill="url(#g1)"/>
+          <g fill="#ffffff" opacity=".92"><ellipse cx="150" cy="66" rx="56" ry="28"/><ellipse cx="113" cy="76" rx="34" ry="22"/><ellipse cx="189" cy="76" rx="34" ry="22"/></g>
+          <g stroke="#1C8CA6" stroke-width="2" opacity=".5"><line x1="120" y1="98" x2="120" y2="140"/><line x1="180" y1="98" x2="180" y2="140"/></g>
+          <g fill="#1C8CA6"><rect x="98" y="142" width="44" height="15" rx="3"/><rect x="158" y="142" width="44" height="15" rx="3"/></g>
+          <g fill="#5FB3C4"><rect x="104" y="146" width="9" height="8" rx="2"/><rect x="164" y="146" width="9" height="8" rx="2"/></g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="top"><span class="tag" style="background:var(--a)">云模拟器</span></div>
+        <div class="tt">云模拟器十五篇 · 范式分类导览</div>
+        <div class="meta">showcase_classified.html · 约 2.00 MB</div>
+        <div class="desc">十五篇云模拟器论文的摘要/引言/结论译文 +「五问」解读，按范式与特性分类导览，便于按方法族横向对比。</div>
+        <div class="acts">
+          <a class="btn primary" href="showcase_classified.html" target="_blank" rel="noopener">打开</a>
+          <button class="btn ghost" onclick="openPrev('云模拟器十五篇 · 范式分类导览','showcase_classified.html')">预览</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 智能体训练 -->
+    <div class="card">
+      <div class="thumb">
+        <svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaf7f9"/><stop offset="1" stop-color="#d3ebf0"/></linearGradient>
+          <marker id="ah" markerWidth="8" markerHeight="8" refX="5" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#136277"/></marker></defs>
+          <rect width="300" height="200" fill="url(#g2)"/>
+          <g fill="none" stroke="#1C8CA6" stroke-width="3" opacity=".7"><circle cx="150" cy="100" r="58"/></g>
+          <path d="M150 42 a58 58 0 0 1 50 29" fill="none" stroke="#136277" stroke-width="4" marker-end="url(#ah)"/>
+          <g fill="#136277"><circle cx="150" cy="100" r="9"/><circle cx="208" cy="100" r="7"/><circle cx="150" cy="42" r="7"/><circle cx="92" cy="100" r="7"/><circle cx="150" cy="158" r="7"/></g>
+          <circle cx="150" cy="100" r="4" fill="#5FB3C4"/>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="top"><span class="tag" style="background:var(--b)">智能体训练</span></div>
+        <div class="tt">智能体训练 · 四方法维度图谱</div>
+        <div class="meta">智能体训练方法图谱.html · 约 32 KB</div>
+        <div class="desc">以轨迹生成/环境复用/环境生成/基准测评四维度串起训练流程图，含 27 篇逐篇问题解决映射与「上云服务智能体」方法集合。</div>
+        <div class="acts">
+          <a class="btn primary" href="智能体训练方法图谱.html" target="_blank" rel="noopener">打开</a>
+          <button class="btn ghost" onclick="openPrev('智能体训练 · 四方法维度图谱','智能体训练方法图谱.html')">预览</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 评测方法 -->
+    <div class="card">
+      <div class="thumb">
+        <svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="g3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaf7f9"/><stop offset="1" stop-color="#cfeaf0"/></linearGradient></defs>
+          <rect width="300" height="200" fill="url(#g3)"/>
+          <path d="M70 132 A60 60 0 0 1 190 132" fill="none" stroke="#1C8CA6" stroke-width="10" opacity=".35" stroke-linecap="round"/>
+          <path d="M70 132 A60 60 0 0 1 150 76" fill="none" stroke="#136277" stroke-width="10" stroke-linecap="round"/>
+          <line x1="130" y1="132" x2="150" y2="82" stroke="#136277" stroke-width="3"/>
+          <circle cx="150" cy="132" r="6" fill="#136277"/>
+          <g fill="#5FB3C4"><rect x="212" y="72" width="16" height="68" rx="3"/><rect x="236" y="98" width="16" height="42" rx="3"/><rect x="260" y="56" width="16" height="84" rx="3"/></g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="top"><span class="tag" style="background:var(--c)">评测方法</span></div>
+        <div class="tt">环境模拟评测方法汇总</div>
+        <div class="meta">评测方法汇总/环境模拟评测方法汇总.html · 约 39 KB</div>
+        <div class="desc">环境模拟方向评测方法汇总：梳理仿真/数字孪生/云模拟器的评测体系、指标与基准，便于对照验证保真度、可扩展性与功能覆盖。</div>
+        <div class="acts">
+          <a class="btn primary" href="评测方法汇总/环境模拟评测方法汇总.html" target="_blank" rel="noopener">打开</a>
+          <button class="btn ghost" onclick="openPrev('环境模拟评测方法汇总','评测方法汇总/环境模拟评测方法汇总.html')">预览</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 论文分类 -->
+    <div class="card">
+      <div class="thumb">
+        <svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="g4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaf7f9"/><stop offset="1" stop-color="#d3ebf0"/></linearGradient></defs>
+          <rect width="300" height="200" fill="url(#g4)"/>
+          <g stroke="#1C8CA6" stroke-width="2.5" opacity=".6" fill="none">
+            <path d="M150 40 L90 100"/><path d="M150 40 L210 100"/><path d="M150 40 L150 100"/>
+            <path d="M90 100 L60 160"/><path d="M90 100 L120 160"/>
+            <path d="M210 100 L180 160"/><path d="M210 100 L240 160"/>
+            <path d="M150 100 L150 160"/>
+          </g>
+          <circle cx="150" cy="40" r="9" fill="#136277"/>
+          <circle cx="90" cy="100" r="7" fill="#1C8CA6"/><circle cx="210" cy="100" r="7" fill="#1C8CA6"/><circle cx="150" cy="100" r="7" fill="#1C8CA6"/>
+          <g fill="#5FB3C4"><circle cx="60" cy="160" r="6"/><circle cx="120" cy="160" r="6"/><circle cx="150" cy="160" r="6"/><circle cx="180" cy="160" r="6"/><circle cx="240" cy="160" r="6"/></g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="top"><span class="tag" style="background:var(--d)">论文分类</span></div>
+        <div class="tt">数据模拟 · 论文分类（树+表格）</div>
+        <div class="meta">papers/论文分类_树与表格.html · 约 28 KB</div>
+        <div class="desc">全部论文分类总览：树状结构呈现方法族谱系，配套表格列出论文、类别与要点，适合作为全局索引与导航起点。</div>
+        <div class="acts">
+          <a class="btn primary" href="papers/论文分类_树与表格.html" target="_blank" rel="noopener">打开</a>
+          <button class="btn ghost" onclick="openPrev('数据模拟 · 论文分类','papers/论文分类_树与表格.html')">预览</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5 文献调研合集 -->
+    <div class="card">
+      <div class="thumb">
+        <svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="g5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaf7f9"/><stop offset="1" stop-color="#cfeaf0"/></linearGradient></defs>
+          <rect width="300" height="200" fill="url(#g5)"/>
+          <g transform="rotate(-8 150 105)"><rect x="80" y="60" width="140" height="90" rx="8" fill="#ffffff" opacity=".6"/></g>
+          <g transform="rotate(4 150 105)"><rect x="80" y="60" width="140" height="90" rx="8" fill="#ffffff" opacity=".82"/></g>
+          <rect x="80" y="60" width="140" height="90" rx="8" fill="#eaf7f9" stroke="#1C8CA6" stroke-width="2"/>
+          <g stroke="#1C8CA6" stroke-width="2" opacity=".5"><line x1="96" y1="84" x2="204" y2="84"/><line x1="96" y1="100" x2="190" y2="100"/><line x1="96" y1="116" x2="200" y2="116"/></g>
+        </svg>
+      </div>
+      <div class="body">
+        <div class="top"><span class="tag" style="background:var(--e)">文献调研合集</span><span class="badge-new">新增</span></div>
+        <div class="tt">数据模拟 · 文献调研（合集）</div>
+        <div class="meta">合并导航/数据模拟文献调研_合并.html · 约 3.46 MB</div>
+        <div class="desc">数据模拟文献调研完整合集（27 篇站点合并版），集环境生成/复用/轨迹生成/基准测评四类于一体，是新增加的入口总览。</div>
+        <div class="acts">
+          <a class="btn primary" href="合并导航/数据模拟文献调研_合并.html" target="_blank" rel="noopener">打开</a>
+          <button class="btn ghost" onclick="openPrev('数据模拟 · 文献调研（合集）','合并导航/数据模拟文献调研_合并.html')">预览</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 预览弹层 -->
+<div class="modal" id="modal" onclick="if(event.target===this)closePrev()">
+  <div class="mpanel">
+    <div class="mhead">
+      <span class="mt" id="mtitle">预览</span>
+      <button class="mclose" onclick="closePrev()">关闭 ✕</button>
+    </div>
+    <iframe id="mframe" src="" title="preview"></iframe>
+  </div>
+</div>
+
+<script>
+  function openPrev(title, src){
+    document.getElementById('mtitle').textContent = title;
+    document.getElementById('mframe').src = src;
+    document.getElementById('modal').classList.add('on');
+    document.body.style.overflow = 'hidden';
+  }
+  function closePrev(){
+    document.getElementById('modal').classList.remove('on');
+    document.getElementById('mframe').src = '';
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closePrev(); });
+</script>
 </body>
 </html>

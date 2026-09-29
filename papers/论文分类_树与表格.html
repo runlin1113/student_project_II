@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN" translate="no"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>数据模拟 · 论文分类（树 + 表格）</title>
+<style>
+  :root{--ink:#14181F;--ink2:#3B4453;--ink3:#6B7484;--ink4:#9AA1AC;--paper:#F7F8FA;
+    --line:rgba(20,24,31,.10);--line2:rgba(20,24,31,.16);
+    --serif:"Songti SC","Source Han Serif SC","Noto Serif SC",Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+    --syn:#2A5A8C; --traj:#7A4FB0; --reuse:#1F7A6B; --bench:#8A5A1F; --rev:#6B7484;
+    --accent:#2A5A8C;}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:radial-gradient(820px 560px at 10% -8%,rgba(42,90,140,.13),transparent 62%),
+      radial-gradient(680px 500px at 94% 4%,rgba(138,90,31,.10),transparent 60%),
+      radial-gradient(760px 600px at 62% 106%,rgba(31,122,107,.10),transparent 62%),
+      linear-gradient(180deg,#FAFBFC 0%,#F3F5F8 100%)}
+  .r-syn{--rc:var(--syn)} .r-traj{--rc:var(--traj)} .r-reuse{--rc:var(--reuse)}
+  .r-bench{--rc:var(--bench)} .r-rev{--rc:var(--rev)}
+
+  .hero{padding:46px 0 18px;text-align:center;max-width:1180px;margin:0 auto;padding-left:28px;padding-right:28px}
+  .hero h1{font-family:var(--serif);font-size:30px;font-weight:400;letter-spacing:.01em;line-height:1.3;margin:0 0 8px}
+  .hero .sub{font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;color:var(--ink4);text-transform:uppercase;margin:0 0 12px}
+  .hero .lede{font-size:13.5px;color:var(--ink3);margin:0 auto;max-width:76ch}
+
+  /* 筛选条 */
+  .filter{max-width:1520px;margin:14px auto 0;padding:0 28px;display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+  .fbtn{font:inherit;font-size:12.5px;color:var(--ink2);cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+    padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.8);
+    box-shadow:0 1px 2px rgba(20,24,31,.06);transition:transform .18s ease,box-shadow .18s ease,color .18s ease}
+  .fbtn:hover{transform:translateY(-1px);box-shadow:0 4px 14px -6px rgba(20,24,31,.3)}
+  .fbtn .dot{width:9px;height:9px;border-radius:50%;background:var(--rc)}
+  .fbtn.on{color:#fff;background:var(--rc);border-color:transparent}
+  .fbtn.on .dot{background:rgba(255,255,255,.85)}
+
+  /* 树（思维导图） */
+  h2.sec{font-family:var(--serif);font-size:19px;font-weight:400;margin:26px 0 16px;
+    max-width:1520px;margin-left:auto;margin-right:auto;padding:0 28px;display:flex;align-items:baseline;gap:12px}
+  h2.sec em{font-family:var(--mono);font-style:normal;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink4)}
+  h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  /* 树（思维导图）：根 → 主干 → 类别节点 → 叶子 */
+  .tree{max-width:1520px;margin:6px auto 16px;padding:0 28px}
+  .tree-root-wrap{display:flex;flex-direction:column;align-items:center}
+  .tree-root{font-family:var(--serif);font-size:18px;color:#fff;background:var(--ink);
+    padding:13px 30px;border-radius:12px;box-shadow:0 12px 26px -16px rgba(20,24,31,.55);
+    position:relative;text-align:center}
+  .tree-root small{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+    color:rgba(255,255,255,.72);margin-top:3px}
+  .tree-root::after{content:"";position:absolute;left:50%;top:100%;width:2px;height:24px;
+    background:var(--line2);transform:translateX(-50%)}
+  .bus{width:100%;max-width:1480px;height:2px;background:var(--line2);margin-top:24px}
+  .tree-cols{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;position:relative}
+  @media(max-width:1080px){.tree-cols{grid-template-columns:repeat(2,1fr);gap:16px}}
+  @media(max-width:560px){.tree-cols{grid-template-columns:1fr}}
+  .subtree{position:relative;padding-top:22px}
+  .subtree::before{content:"";position:absolute;top:0;left:50%;width:2px;height:22px;
+    background:var(--line2);transform:translateX(-50%)}
+  .cat-node{border-radius:14px;background:rgba(255,255,255,.84);border:1px solid rgba(255,255,255,.9);
+    border-top:4px solid var(--rc);box-shadow:0 14px 30px -24px rgba(20,24,31,.5);padding:13px 14px}
+  .cat-node .c-title{display:flex;align-items:baseline;gap:8px}
+  .cat-node .c-name{font-family:var(--serif);font-size:16px;color:var(--rc);font-weight:400}
+  .cat-node .c-count{font-family:var(--mono);font-size:10.5px;color:var(--ink4)}
+  .cat-node .c-deflabel{margin-top:9px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--rc);opacity:.85;border-top:1px dashed var(--line);padding-top:7px}
+  .cat-node .c-def{font-size:11.5px;color:var(--ink3);line-height:1.55;margin:4px 0 0}
+  .leaves{margin-top:11px;padding-left:15px;border-left:2px solid var(--rc)}
+  .leaf{display:block;position:relative;font-size:12px;color:var(--ink2);background:#fff;
+    border:1px solid rgba(20,24,31,.10);border-radius:8px;padding:5px 9px;margin:7px 0;cursor:pointer;
+    box-shadow:0 6px 14px -12px rgba(20,24,31,.5);
+    transition:transform .18s ease,box-shadow .18s ease,color .18s ease}
+  .leaf::before{content:"";position:absolute;left:-15px;top:50%;width:13px;height:2px;background:var(--rc)}
+  .leaf:hover{transform:translateX(2px);box-shadow:0 10px 18px -12px rgba(20,24,31,.55);color:var(--rc)}
+
+  /* 表格：每类一页 + 左右翻页（毛玻璃，无框） */
+  .pager{max-width:1180px;margin:10px auto 40px;padding:0 54px;position:relative}
+  /* 固定舞台高度：切换类别时整体不再跳动，长表在表体内滚动 */
+  .pg-stage{position:relative;height:min(70vh,640px)}
+  .tbl-card{display:none;position:absolute;inset:0;flex-direction:column;
+    background:rgba(255,255,255,.34);
+    -webkit-backdrop-filter:blur(13px) saturate(1.08);backdrop-filter:blur(13px) saturate(1.08);
+    border:1px solid rgba(255,255,255,.45);border-radius:16px;overflow:hidden}
+  .tbl-card.active{display:flex;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .c-head{flex:0 0 auto;padding:16px 22px;background:rgba(255,255,255,.30);border-bottom:1px solid var(--line)}
+  .c-h-top{display:flex;align-items:baseline;gap:10px}
+  .c-name{font-family:var(--serif);font-size:19px;color:var(--rc);font-weight:400}
+  .c-count{font-family:var(--mono);font-size:11px;color:var(--ink4)}
+  .c-def{font-size:12px;color:var(--ink3);line-height:1.55;margin-top:6px}
+  /* 表体内部滚动：长表不撑高舞台，短表顶部对齐留白 */
+  .tbl-scroll{flex:1 1 auto;min-height:0;overflow:auto}
+  .tbl-scroll table{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
+  .tbl-scroll thead th{position:sticky;top:0;background:var(--ink);color:#fff;text-align:left;padding:10px 12px;font-weight:600;
+    white-space:nowrap;font-size:11.5px;border-right:1px solid rgba(255,255,255,.12);z-index:2}
+  .tbl-scroll tbody td{padding:9px 12px;border:1px solid var(--line);vertical-align:top;border-top:none;border-left:none}
+  .tbl-scroll tbody tr:hover{background:rgba(42,90,140,.08)}
+  .prow{transition:background .45s}
+  .p-name{font-family:var(--serif);font-size:15px;font-weight:400;color:var(--ink)}
+  .p-en{font-size:11px;color:var(--ink3);line-height:1.4}
+  .p-ax{font-family:var(--mono);font-size:10.5px;color:var(--ink4)}
+  .star{color:#C8861B}
+  td.k{color:var(--ink2)}
+  .muted{color:var(--ink4)}
+  /* 翻页控件：左右箭头贴表格两侧，底部圆点+计数 */
+  .pg-btn{width:48px;height:48px;border-radius:50%;border:1px solid rgba(255,255,255,.7);
+    background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+    color:var(--ink);cursor:pointer;font-size:24px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 16px -10px rgba(20,24,31,.4);
+    transition:background .16s ease,box-shadow .16s ease,transform .16s ease}
+  .pg-btn:hover{background:rgba(255,255,255,.85);box-shadow:0 10px 20px -10px rgba(20,24,31,.45)}
+  .pg-btn:disabled{opacity:.3;cursor:not-allowed}
+  .pg-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:6}
+  .pg-arrow:hover{transform:translateY(-50%) scale(1.06)}
+  #prev{left:-40px}
+  #next{right:-40px}
+  .pg-nav{display:flex;align-items:center;justify-content:center;gap:22px;margin-top:20px}
+  .pg-dots{display:flex;gap:9px;align-items:center}
+  .pg-dot{width:9px;height:9px;border-radius:50%;background:var(--ink4);opacity:.4;cursor:pointer;transition:all .2s}
+  .pg-dot.on{opacity:1;background:var(--accent);transform:scale(1.25)}
+  .pg-counter{font-family:var(--mono);font-size:12px;color:var(--ink3);min-width:56px;text-align:center}
+  footer{max-width:1520px;margin:0 auto;padding:24px 28px 46px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--ink3);line-height:1.9}
+  footer code{font-family:var(--mono);font-size:11.5px;color:var(--ink2)}
+</style>
+</head>
+<body>
+  <div class="hero">
+    <div class="sub">Method Taxonomy · 28 Papers</div>
+    <h1>数据模拟 · 论文分类</h1>
+    <p class="lede">按「方法类别」四分法——<b>轨迹合成 / 环境复用 / 环境生成 / 测评基准</b>——将 <code>papers/</code> 下 28 篇独立工作逐篇归类。上方为树状思维导图（含方法定义），下方为逐类独立成表的<b>翻页浏览</b>（左右按钮 / 圆点切换）。</p>
+  </div>
+
+  <div class="filter" id="filter">
+    <button class="fbtn on" data-cat="all">全部 <span class="dot" style="background:var(--ink4)"></span></button>
+    <button class="fbtn r-traj" data-cat="traj"><span class="dot"></span>轨迹合成 <span class="num"></span></button>
+    <button class="fbtn r-reuse" data-cat="reuse"><span class="dot"></span>环境复用 <span class="num"></span></button>
+    <button class="fbtn r-syn" data-cat="syn"><span class="dot"></span>环境生成 <span class="num"></span></button>
+    <button class="fbtn r-bench" data-cat="bench"><span class="dot"></span>测评基准 <span class="num"></span></button>
+    <button class="fbtn r-rev" data-cat="rev"><span class="dot"></span>综述 <span class="num"></span></button>
+  </div>
+
+  <h2 class="sec">树状思维导图 <em>Mind Map</em></h2>
+  <div class="tree" id="tree"></div>
+
+  <h2 class="sec">逐类分类表 <em>翻页 · Pager</em></h2>
+  <div class="pager">
+    <div class="pg-stage" id="stage">
+      <button class="pg-btn pg-arrow" id="prev" aria-label="上一页">‹</button>
+      <button class="pg-btn pg-arrow" id="next" aria-label="下一页">›</button>
+    </div>
+    <div class="pg-nav">
+      <div class="pg-dots" id="dots"></div>
+      <span class="pg-counter" id="counter"></span>
+    </div>
+  </div>
+
+  <footer>
+    <div>分类判据：按论文<b>主要贡献</b>落位——产出轨迹数据→轨迹合成；回收已有资产→环境复用；从零造环境→环境生成；提供标准任务+可验证判定→测评基准。跨界论文按核心贡献归类。</div>
+    <div>文件映射：<code>Synthetic.pdf</code>=ESAT（arXiv:2607.16900）；<code>2608.25518.pdf</code>=AgenticGameDev。<code>AgentBench.pdf</code> 与 <code>AgentBench_Evaluating LLMs as Agents.pdf</code> 为同一论文（计 1 篇）。</div>
+    <div>共存源文件：<code>papers/论文分类表.md</code>（同内容 Markdown 版）。</div>
+  </footer>
+
+<script>
+const CATS = {
+  traj:{label:"轨迹合成",def:"不造环境，直接生成 (思考,动作,观测) 轨迹作训练/对齐数据；核心死结是轨迹质量与多样性。",cls:"r-traj"},
+  reuse:{label:"环境复用",def:"不新造环境，从已有资产（历史轨迹、静态环境）中回收/激活出可交互、可验证的环境。",cls:"r-reuse"},
+  syn:{label:"环境生成",def:"用代码/神经符号从零程序化合成可执行、状态真实、终态可验证的环境，避开 LLM 直接模拟的幻觉。",cls:"r-syn"},
+  bench:{label:"测评基准",def:"把真实系统封装成标准化任务集+可验证终态判定，既度量智能体能力，又充当训练验证器。",cls:"r-bench"},
+  rev:{label:"综述/背景",def:"系统梳理方向脉络，提供框架与术语地基，作引言与背景引用。",cls:"r-rev"}
+};
+const PAPERS = [
+ {cat:"traj",name:"Self-Instruct",en:"自举自生成指令",ax:"arXiv:2212.10560",prob:"高质量指令数据稀缺、人工标注贵",meth:"175 种子任务自举，模型生成指令-输入-输出后过滤微调",ev:"Super-NaturalInstructions (52K)、RAFT",eff:"SuperNI +33%，接近 InstructGPT（差 5%）",proj:"云运维指令/任务模板自举起点",ch:"少量种子场景自举出题",ins:"自举框架是一切自生成数据鼻祖"},
+ {cat:"traj",name:"ReAct",en:"轨迹格式基石",ax:"arXiv:2210.03629",prob:"纯推理缺 grounding、纯动作缺规划、易幻觉",meth:"(思考,动作,观测) 交错轨迹格式，接外部工具/环境",ev:"HotpotQA、Fever、ALFWorld、WebShop",eff:"抗幻觉；ALFWorld +34%、WebShop +10%",proj:"统一所有轨迹为 ReAct 格式",ch:"云运维轨迹统一成 (思考,动作,观测)",ins:"推理与行动协同是轨迹范式前提"},
+ {cat:"traj",name:"FireAct",en:"多方法轨迹微调",ax:"arXiv:2310.05915",prob:"提示式 ReAct 不稳、多步易错",meth:"用模型自生成 ReAct/CoT/Reflexion 多类轨迹做微调",ev:"HotpotQA、AlfWorld、ToolBench、MiniWoB++",eff:"显著超越纯提示 ReAct；多方法混合最稳",proj:"★强模型在云环境 roll 轨迹微调自有底座",ch:"多方法混合质量闸门搬到云运维",ins:"多方法混合+过滤是质量闸门",star:true},
+ {cat:"traj",name:"AutoAct",en:"自规划合成轨迹",ax:"arXiv:2401.05268",prob:"依赖闭源模型造数据成本高",meth:"自规划分解任务、规划/调用多角色分工合成，不依赖闭源",ev:"ToolBench、MiniWoB++、HotpotQA",eff:"超过 AgentTuning 等基线",proj:"零闭源依赖造云运维轨迹",ch:"开源模型自举造数据降成本",ins:"角色分工+自举降闭源依赖"},
+ {cat:"traj",name:"AgentOhana",en:"多源轨迹统一",ax:"arXiv:2402.15506",prob:"轨迹零散、格式不一难复用",meth:"统一多源轨迹格式 + 均衡采样管线",ev:"AgentBench 聚合",eff:"统一管线后训练增益稳定",proj:"汇聚多方云运维轨迹统一格式",ch:"建多源轨迹数据工厂",ins:"格式统一+均衡采样防偏"},
+ {cat:"traj",name:"ESAT",en:"零环境生成（Synthetic.pdf）",ax:"arXiv:2607.16900",prob:"连环境都不想造，想零成本造数据",meth:"只给 API 规格，LLM 当数字世界模型边执行边编造自洽响应",ev:"AppWorld、OfficeBench",eff:"微调显著提升",proj:"云 API 规格文档现成，可零成本起步",ch:"用云 API 文档直接造轨迹",ins:"没有环境也能造数据"},
+ {cat:"traj",name:"RLSVR / SpyRL",en:"自验证奖励",ax:"arXiv:2607.23802（COLM 2026）",prob:"开放式任务没有裁判（reward hacking）",meth:"把开放任务改造成「谁是卧底」式多智能体博弈，产生自验证奖励",ev:"摘要/创意写作/数学推理基准",eff:"超越已有自改进方法",proj:"解决云工单「无裁判」问题",ch:"云运维开放任务博弈化",ins:"自验证奖励绕开裁判瓶颈"},
+ {cat:"traj",name:"多智能体模拟合成",en:"Synthesizing Post-Training Data…",ax:"ACL 2025",prob:"后训练高质量指令数据难获取",meth:"多智能体模拟（生成者/应对者/评估者）合成后训练数据",ev:"AlpacaEval 类指令遵循基准",eff:"ACL 2025 长文，后训练增益稳定",proj:"用多角色模拟造云运维对话数据",ch:"多智能体模拟云用户/运维交互",ins:"多角色博弈=数据工厂"},
+
+ {cat:"reuse",name:"Terminal-Universe",en:"轨迹反向重建环境",ax:"arXiv:2609.04148",prob:"环境制造贵；历史轨迹资产沉睡（轨迹与环境是同一 episode 两面）",meth:"倒置映射从轨迹恢复环境：确定性重放还原工作区 + agentic completion 补全",ev:"Terminal-Bench 2.1、EvoCode-Bench v2",eff:"37.3k 任务级环境；Qwen3.5-27B Terminal-Bench 2.1 +11.9",proj:"历史运维会话/工单轨迹→反向重建云运维训练环境",ch:"存量运维记录变环境库",ins:"轨迹⇄环境可互相推导"},
+ {cat:"reuse",name:"EnvHarness",en:"静态环境套壳",ax:"arXiv:2608.19880",prob:"现有环境静态、缺中间信号、验证器稀疏",meth:"Setup/Contract/Chain 三组件包装标准接口，底层环境与原生验证器一行不改",ev:"ALFWorld、SWE-bench Verified",eff:"ALFWorld 62.4→68.3；OOD +9.0；SWE-bench 步数 −9.8%",proj:"给 LocalStack 等现成云模拟环境套壳",ch:"零侵入增强现有云模拟器",ins:"先复用再增强，勿推倒重来"},
+
+ {cat:"syn",name:"CloudEmu",en:"神经符号云模拟器",ax:"arXiv:2608.23842",prob:"云环境稀缺/危险/贵；现成模拟器覆盖不全",meth:"LLM 读云文档 + 符号抽象抑制幻觉 + 真云当 oracle 做测试修复对齐",ev:"AWS/GCP 服务覆盖率与准确率",eff:"覆盖率与准确率双超 LocalStack",proj:"★与项目直接同构，优先精读",ch:"造云运维模拟器+可信奖励",ins:"神经符号+真云 oracle 是合成可信环境范本",star:true},
+ {cat:"syn",name:"EnvCraft",en:"沙盒+拓扑感知数据引擎",ax:"arXiv:2609.05576",prob:"跨控制台长程运维环境难造",meth:"环境合成引擎生成可执行沙盒（状态+工具+文档）+ 拓扑感知数据引擎采样工具链",ev:"claw 类基准、通用工具使用",eff:"139 环境/~20K 任务；claw +11.9%、通用工具 +8.0%",proj:"跨控制台长程运维问题定义同构",ch:"造跨云控制台训练环境",ins:"沙盒隔离+拓扑感知保证任务可执行"},
+ {cat:"syn",name:"FACET",en:"容器状态作共享底座",ax:"arXiv:2608.18580",prob:"终端任务中指令/解法/验证器三者常不一致",meth:"容器状态作为三者共享底座，先建环境再派生其余",ev:"350 任务端到端产出率、6,020 任务释放",eff:"70.0% 端到端产出率；释出 6,020 终端任务",proj:"云运维指令/解法/验证器统一以容器状态为真值",ch:"用真实云状态做唯一真值源",ins:"环境是唯一的真值来源"},
+ {cat:"syn",name:"AWM",en:"Agent World Model（代码+SQL 环境）",ax:"arXiv:2602.10090（ICML 2026）",prob:"环境状态不可靠/不可查",meth:"代码驱动 + SQL 数据库环境，状态可查→奖励可靠",ev:"1,000 个环境、SQL 库比对",eff:"1,000 个代码+SQL 环境；「状态可查→奖励可靠」立论出处",proj:"云状态可查性=奖励可靠性的论据",ch:"云数据库状态作验证器",ins:"状态可查是奖励可靠的前提"},
+ {cat:"syn",name:"Agent-World",en:"自进化竞技场+MCP 工具",ax:"arXiv:2604.18292",prob:"环境固定会饱和",meth:"真实数据库+工具生态合成任务 + 多环境 RL 自进化闭环（诊断弱点→定向学习）",ev:"1,978 环境/19,822 工具/23 基准",eff:"1,978 环境·19,822 工具；23 基准超越",proj:"云运维能力缺口驱动持续合成任务",ch:"环境驱动的数据飞轮",ins:"环境应随模型弱点持续生长"},
+ {cat:"syn",name:"EnvScaler",en:"程序化合成+规则验证奖励",ax:"arXiv:2601.05808",prob:"合成环境成本高、状态不可控",meth:"SkelBuilder 质量双智能体评估 + ScenGenerator 规则验证奖励，程序化合成",ev:"191 环境/~7K 场景、3 基准",eff:"191 环境·~7K 场景；3 基准提升",proj:"云环境程序化合成+规则验证奖励范本",ch:"低成本大规模造云场景",ins:"规则验证奖励避免 reward hacking"},
+ {cat:"syn",name:"LogicEnvGen",en:"逻辑驱动多样仿真",ax:"arXiv:2601.13556",prob:"任务多样性不足、状态覆盖不全",meth:"行为计划决策树 + 逻辑轨迹组合 + CSP 约束求解实例化（具身 AI）",ev:"逻辑覆盖倍数、故障检测率",eff:"逻辑覆盖 1.04–2.61×；故障检测 +4~68%",proj:"逻辑多样性方法论可迁移到云任务组合",ch:"用约束求解穷举云任务情形",ins:"抽象逻辑层穷举保证多样性"},
+ {cat:"syn",name:"InfiniteWeb",en:"统一规格+TCTDD",ax:"arXiv:2601.04126",prob:"Web/控制台环境合成一致性差、功能 bug 难抓",meth:"统一规格 + 任务驱动测试开发(TCTDD) + 可验证评测器",ev:"OSWorld、Online-Mind2Web",eff:"OSWorld +6.9%、Online-Mind2Web +5.7%、~$1.93/站",proj:"Web/控制台环境合成直接范本",ch:"云控制台环境三段式落地",ins:"TCTDD 让 bug 在生成立即被抓"},
+ {cat:"syn",name:"Environment Evolution",en:"off-policy 提难度",ax:"arXiv:2609.04128",prob:"环境固定、模型变强后无挑战",meth:"off-policy 提升环境难度 + 逐代调度，双门控反馈环保可解性",ev:"Terminal-Bench 2.1",eff:"Qwen3.6-27B +14.4、35B-A3B +18.0",proj:"云环境随模型共进化",ch:"诊断弱点→定向加难",ins:"环境难度要跟着模型走"},
+ {cat:"syn",name:"SPADE",en:"环境设计可学习+自博弈",ax:"arXiv:2608.19197",prob:"环境设计与智能体能力不匹配",meth:"一个 LLM 分饰环境设计者与推理 agent，奖励用 hint-based regret，自博弈",ev:"8 个留出基准、BFCL-v4、ACEBench-Agent",eff:"8 基准平均 +5.3；BFCL-v4 多轮 +5.7、ACEBench-Agent +13.9",proj:"让环境设计随训练自适应",ch:"自适应课程生成云任务",ins:"环境设计本身可学习"},
+ {cat:"syn",name:"AgenticGameDev",en:"造游戏=数据引擎（2608.25518）",ax:"arXiv:2608.25518",prob:"轨迹缺过程真值、易刷分",meth:"让 agent 造游戏，开发过程留协议级 trace（意图/中间状态/事件日志）",ev:"引擎级 ground-truth 状态/物理/事件校验",eff:"轨迹自带引擎级真值，不可伪造",proj:"云运维「世界模型」数据引擎雏形",ch:"把运维过程当可验证数据引擎",ins:"过程 trace 比终态更值钱"},
+
+ {cat:"bench",name:"SWE-bench",en:"真实 GitHub 仓库",ax:"arXiv:2310.06770（ICLR 2024）",prob:"代码智能体能力缺可信度量",meth:"真实 GitHub issue + 单元测试，%Resolved 判定",ev:"%Resolved、SWE-bench Verified",eff:"事实标准，被 2026 论文普遍引用作训练后验证",proj:"云运维基准判定范式（单元测试/终态比对）",ch:"定义云运维工单验证器",ins:"可验证终态=公信力来源"},
+ {cat:"bench",name:"OSWorld",en:"真实操作系统",ax:"arXiv:2404.07972",prob:"桌面/OS 级 GUI 智能体难评",meth:"真实虚拟机 OS 多任务，成功率判定",ev:"任务成功率",eff:"成为 GUI 智能体标准基准",proj:"云控制台/桌面运维评测参考",ch:"真实 OS 任务做云桌面运维基准",ins:"真实系统封装是最硬评测"},
+ {cat:"bench",name:"AgentBench",en:"8 环境聚合",ax:"arXiv:2308.03688",prob:"缺乏跨领域统一评测",meth:"8 种真实/仿真环境聚合，统一接口",ev:"跨环境综合分",eff:"首个 LLM-as-Agent 综合基准",proj:"云运维纳入多环境评测框架",ch:"多环境聚合评测云智能体",ins:"聚合评测防单点过拟合"},
+ {cat:"bench",name:"tau-bench",en:"工具-智能体-用户多轮",ax:"arXiv:2406.12045（EMNLP Findings 2025）",prob:"单轮任务测不出多轮交互",meth:"模拟用户多轮对话 + 数据库库态为真值",ev:"pass^k",eff:"成为 2026 环境/轨迹论文通用评测",proj:"云运维工单 = tau-bench 同构（用户↔运维多轮）",ch:"仿造云运维多轮基准",ins:"把「人」纳入回路，库态做真值"},
+ {cat:"bench",name:"WebArena",en:"真实 Web 站点自托管",ax:"arXiv:2307.13854",prob:"Web 智能体缺真实评测",meth:"复刻真实网站并配可验证任务",ev:"任务成功率",eff:"GUI/Web 智能体标准基准",proj:"云控制台 Web 界面评测参考",ch:"自托管云控制台评测环境",ins:"真实站点+可验证任务最稳"},
+
+ {cat:"rev",name:"A Survey on LLM based Autonomous Agents",en:"综述（Wang et al.）",ax:"",prob:"方向缺乏系统梳理",meth:"综述规划/记忆/工具使用等模块",ev:"—",eff:"奠基性综述",proj:"引言/背景引用",ch:"用其分类搭综述框架",ins:"模块化解构智能体"},
+ {cat:"rev",name:"LLM Empowered Agent-based Modeling and Simulation",en:"综述（仿真视角）",ax:"",prob:"ABM 仿真如何借 LLM 缺梳理",meth:"综述 LLM 赋能的基于智能体建模与仿真",ev:"—",eff:"仿真视角文献基础",proj:"仿真视角背景",ch:"数据模拟的「仿真」维度参考",ins:"仿真即数据生成"}
+];
+
+const order = ["traj","reuse","syn","bench","rev"];
+const counts = {}; order.forEach(c=>counts[c]=PAPERS.filter(p=>p.cat===c).length);
+document.querySelectorAll('.fbtn .num').forEach(s=>{const c=s.parentElement.dataset.cat; if(c!=='all') s.textContent='·'+counts[c];});
+
+// 树（根 → 主干 → 类别节点 → 叶子）
+const tree = document.getElementById('tree');
+const total = PAPERS.length;
+tree.innerHTML = `<div class="tree-root-wrap"><div class="tree-root">数据模拟 · 论文分类<small>${total} 篇 · 四类方法 + 综述</small></div></div><div class="bus"></div>`;
+const cols = document.createElement('div'); cols.className='tree-cols';
+order.forEach(c=>{
+  const cat=CATS[c], items=PAPERS.filter(p=>p.cat===c);
+  const st=document.createElement('div'); st.className='subtree '+cat.cls;
+  const leaves=items.map(p=>`<span class="leaf" data-idx="${PAPERS.indexOf(p)}">${p.name}</span>`).join('');
+  st.innerHTML=`<div class="cat-node">
+      <div class="c-title"><span class="c-name">${cat.label}</span><span class="c-count">${items.length} 篇</span></div>
+      <div class="c-deflabel">方法定义</div>
+      <p class="c-def">${cat.def}</p>
+      <div class="leaves">${leaves}</div></div>`;
+  cols.appendChild(st);
+});
+tree.appendChild(cols);
+
+// 表：每个类别独立成页（翻页）
+const stage=document.getElementById('stage');
+let rid=0;
+order.forEach(c=>{
+  const cat=CATS[c], items=PAPERS.filter(p=>p.cat===c);
+  const card=document.createElement('div'); card.className='tbl-card '+cat.cls; card.dataset.cat=c;
+  let rows='';
+  items.forEach(p=>{
+    rid++;
+    const star=p.star?' <span class="star">★</span>':'';
+    rows+=`<tr id="r${rid}" class="prow">
+      <td><div class="p-name">${p.name}${star}</div><div class="p-en">${p.en}</div><div class="p-ax">${p.ax||'—'}</div></td>
+      <td class="k">${p.prob}</td><td class="k">${p.meth}</td><td class="k">${p.ev}</td>
+      <td class="k">${p.eff}</td><td class="k">${p.proj}</td><td class="k">${p.ch}</td><td class="k">${p.ins}</td></tr>`;
+  });
+  card.innerHTML=`<div class="c-head"><div class="c-h-top"><span class="c-name">${cat.label}</span><span class="c-count">${items.length} 篇</span></div><div class="c-def">${cat.def}</div></div>
+    <div class="tbl-scroll"><table><thead><tr><th>具体方法（论文）</th><th>针对问题</th><th>解决方法</th><th>评测方法</th><th>实际效果</th><th>项目关联</th><th>机会点</th><th>启发</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+  stage.appendChild(card);
+});
+
+// 翻页逻辑
+const cards=[...stage.querySelectorAll('.tbl-card')];
+const dotsBox=document.getElementById('dots');
+const counter=document.getElementById('counter');
+const prevBtn=document.getElementById('prev');
+const nextBtn=document.getElementById('next');
+let cur=0;
+cards.forEach((_,i)=>{const d=document.createElement('span');d.className='pg-dot';d.dataset.i=i;dotsBox.appendChild(d);});
+function render(){
+  cards.forEach((cd,i)=>cd.classList.toggle('active',i===cur));
+  dotsBox.querySelectorAll('.pg-dot').forEach((d,i)=>d.classList.toggle('on',i===cur));
+  counter.textContent=(cur+1)+' / '+cards.length;
+  prevBtn.disabled=cur===0; nextBtn.disabled=cur===cards.length-1;
+  const sc=cards[cur].querySelector('.tbl-scroll'); if(sc) sc.scrollTop=0;
+}
+function goTo(i){cur=Math.max(0,Math.min(cards.length-1,i));render();}
+function scrollToStage(){document.getElementById('stage').scrollIntoView({behavior:'smooth',block:'start'});}
+prevBtn.addEventListener('click',()=>goTo(cur-1));
+nextBtn.addEventListener('click',()=>goTo(cur+1));
+dotsBox.querySelectorAll('.pg-dot').forEach(d=>d.addEventListener('click',()=>goTo(+d.dataset.i)));
+
+// 树→表 跳转（切到对应页 + 高亮行）
+document.querySelectorAll('.leaf').forEach(l=>{
+  l.addEventListener('click',()=>{
+    const idx=+l.dataset.idx; const p=PAPERS[idx];
+    goTo(order.indexOf(p.cat));
+    scrollToStage();
+    setTimeout(()=>{const target=document.getElementById('r'+(idx+1));
+      if(target){target.style.background='rgba(42,90,140,.20)';
+        setTimeout(()=>target.style.background='',900);}},150);
+  });
+});
+
+// 筛选条 → 切到对应页
+document.querySelectorAll('.fbtn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    const c=b.dataset.cat;
+    goTo(c==='all'?0:order.indexOf(c));
+    scrollToStage();
+  });
+});
+
+render();
+</script>
+</body></html>

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>环境模拟评测方法汇总文档</title>
+<style>
+  :root{--acc:#2A5A8C;--ver:#B5731F;--res:#2E7D32;--ink:#1d2b3a;--mut:#5a6b7d;--line:#dbe4ef;}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.7 "Microsoft YaHei",system-ui,"Segoe UI",sans-serif;color:var(--ink);background:linear-gradient(160deg,#dfeaf6,#eef3f9 40%,#e7eef7)}
+  .wrap{max-width:1100px;margin:0 auto;padding:22px 26px 60px}
+  header.top{text-align:center;border-bottom:3px solid var(--acc);padding-bottom:14px;margin-bottom:14px}
+  header.top h1{margin:0 0 6px;font-size:24px;color:var(--acc)}
+  .sub{color:var(--mut);font-size:13.5px}
+  .scope{background:#eaf1f9;border-left:4px solid var(--acc);padding:10px 14px;margin:14px 0 4px;border-radius:0 8px 8px 0;font-size:13px}
+  .toolbar{text-align:right;margin:8px 0}
+  .toolbar button{background:var(--acc);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer}
+  .toolbar button:hover{background:#224a73}
+  .pager{position:relative}
+  #stage{position:relative;min-height:min(82vh,860px);height:min(82vh,860px)}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;box-shadow:0 2px 10px rgba(40,70,110,.08);overflow:hidden}
+  .slide.on{display:flex}
+  .ph{border-bottom:1px dashed var(--line);padding-bottom:8px;margin-bottom:8px;flex:0 0 auto}
+  .tag{display:inline-block;background:var(--acc);color:#fff;font-size:12px;padding:2px 9px;border-radius:20px;margin-bottom:5px}
+  .ph h2{margin:0 0 2px;font-size:20px;color:var(--acc)}
+  .ph .meta{color:var(--mut);font-size:12.5px}
+  .ph .meta a{color:var(--acc)}
+  .en{color:var(--mut);font-weight:400;font-size:14px}
+  .hero{flex:1 1 auto;display:flex;align-items:center;justify-content:center;margin:6px 0;min-height:0}
+  .svgbox{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#fbfdff;border:1px solid var(--line);border-radius:12px;padding:10px;overflow:auto}
+  .svgbox svg{max-width:100%;max-height:100%}
+  .info{flex:0 0 38%;display:grid;grid-template-columns:1fr 1fr;gap:18px;overflow:auto;padding-top:6px;border-top:1px solid var(--line)}
+  .infocol{min-width:0}
+  h3{font-size:14px;color:var(--ver);margin:10px 0 6px;border-left:3px solid var(--ver);padding-left:8px}
+  .dt{width:100%;border-collapse:collapse;font-size:12.5px}
+  .dt th,.dt td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left}
+  .dt th{background:#eef3f9;color:var(--acc)}
+  .dt .lk a{color:var(--acc);word-break:break-all}
+  .bench{font-size:12.5px;background:#f3f8f4;border:1px solid #d6e7da;border-radius:8px;padding:8px 10px;margin:0}
+  .mini{font-size:12.5px;margin:5px 0}
+  .mini.rel{background:#fff7ec;border:1px solid #f0dcc0;border-radius:8px;padding:7px 9px}
+  .sumscroll{flex:1 1 auto;overflow:auto;padding-right:6px}
+  .bigtable{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0 22px}
+  .bigtable th,.bigtable td{border:1px solid var(--line);padding:7px 9px;vertical-align:top;text-align:left}
+  .bigtable thead th{background:var(--acc);color:#fff;position:sticky;top:0}
+  .bigtable .grp{background:#eef3f9;width:150px}
+  .bigtable .grp2{background:#fdf3e8;width:190px}
+  .bigtable .pn{width:140px}
+  .bigtable .pn .en{font-size:11px}
+  #prev,#next{position:absolute;top:46%;width:42px;height:42px;border-radius:50%;border:none;background:rgba(42,90,140,.9);color:#fff;font-size:22px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:5}
+  #prev{left:-52px} #next{right:-52px}
+  #prev:hover,#next:hover{background:var(--acc)}
+  #prev:disabled,#next:disabled{opacity:.35;cursor:default}
+  #dots{text-align:center;margin-top:14px}
+  #dots button{width:11px;height:11px;border-radius:50%;border:none;background:#b9c8db;margin:0 4px;cursor:pointer;padding:0}
+  #dots button.on{background:var(--acc);transform:scale(1.25)}
+  #counter{text-align:center;color:var(--mut);font-size:13px;margin-top:8px}
+  @media(max-width:780px){.info{grid-template-columns:1fr}.slide{padding:14px 16px}#prev{left:-6px}#next{right:-6px}}
+</style>
+</head>
+<body translate="no">
+<div class="wrap">
+<header class="top">
+  <h1>环境模拟评测方法汇总文档</h1>
+  <div class="sub">数据模拟文献调研 · “环境生成（syn / 环境合成）”类 11 篇论文的评估章节分析</div>
+</header>
+
+<div class="scope">
+  <b>范围说明：</b>网页中的“环境合成”对应分类体系的 <b>环境生成（syn）</b> 类，共 <b>11</b> 篇论文。
+  本文逐篇提取其评估章节（网页“五问解读”之 Q4：如何证明有效性 / 用什么数据集）。每篇论文独占一页，流程示意图占主画面；末尾汇总页含两张分类大表。
+</div>
+
+<div class="toolbar"><button id="exportMd">⬇ 导出 Markdown 文档</button></div>
+
+<div class="pager">
+  <div id="stage">
+    <button id="prev" aria-label="上一篇">‹</button>
+    <button id="next" aria-label="下一篇">›</button>
+  </div>
+  <div id="dots"></div>
+  <div id="counter"></div>
+</div>
+
+<footer style="margin-top:30px;border-top:1px solid var(--line);padding-top:12px;color:var(--mut);font-size:12px">
+  数据来源：数据模拟文献调研 / 论文分类（树与表格）网页（环境生成 syn 类）。外部基准链接经 WebSearch 核验；
+  各论文自身合成数据集均“随论文开源”，以对应 arXiv 编号为准。本文为评测方法汇总，非论文全文复现。
+</footer>
+</div>
+
+<script>
+const PAPERS = [
+{name:"CloudEmu",en:"神经符号云模拟器",ax:"2608.23842",
+ problem:"云环境稀缺/危险/贵；现成模拟器（人工 API 级 mock）覆盖不全。AWS 单家 240+ 服务、单服务最多 200 API，最先进模拟器也只覆盖 95 服务。",
+ method:"神经符号代码合成：①文档整理（资源索引，穿行云文档）→②代码生成（LLM 在预编程状态机模板的“洞”里填代码）→③程序对齐（真云当 oracle 做定向测试-检测分歧-追根溯源-LLM 辅助修复）。",
+ verify:"真云 oracle（真实云当裁判，对齐允许/禁止行为的效果与错误码）",
+ flow:["读云文档\n建资源索引","神经符号\n代码合成","真云 oracle\n测试-修复对齐","评测：AWS/GCP\n覆盖率+准确率","对比 LocalStack\n(人工模拟器)"],
+ result:"在 AWS 与 GCP 服务上评估“覆盖率”与“调用准确率”，双双超过 LocalStack（后者由大型工程师团队耗时十多年手工开发）。论文仅 14 页，评估对象即云服务本身。",
+ datasets:[["AWS / GCP 服务集","评测对象：240+ 服务、单服务最多 200 API；作为覆盖率与准确率的评测靶面","论文(arXiv:2608.23842)，规格以云厂商公开文档为准"],["LocalStack（基线）","大型人工 AWS 模拟器；论文称其覆盖 95 个服务且 API 仅为部分覆盖，作为对照基线","https://github.com/localstack/localstack"],["资源索引图（作者构建）","把云服务建模为资源状态机后得到的图结构，给出节点数/边密度等量化云复杂度指标","随论文开源（见 arXiv:2608.23842 代码）"]],
+ base:"神经符号仿真器（云 API 状态机）",paradigm:"覆盖率/准确度型",rel:"★ 与项目最直接同构：环境从文档→仿真器、奖励可信靠真云 oracle 校验"},
+{name:"EnvCraft",en:"沙盒+拓扑感知数据引擎",ax:"2609.05576",
+ problem:"跨控制台长程运维环境难造；现有环境合成只做到“应用级工具调用端点”，撑不起系统级（claw-like）智能体所需的有状态工作区与异步任务循环。",
+ method:"两个互补引擎：环境合成引擎构造沙盒隔离工作区（状态+工具+文档）；拓扑感知的数据生成引擎在其上产出连贯任务轨迹。全程自动化，无需人工环境工程。",
+ verify:"真实可执行沙盒（低延迟、高保真、成本可控，非 LLM 假装 API 返回）",
+ flow:["环境合成引擎\n→可执行沙盒","拓扑感知\n数据引擎→任务轨迹","在 Qwen3/3.5\n(8B–32B) 评测","类 Claw 基准\n+通用工具基准","指标：成功率\n+token 成本"],
+ result:"合成 139 个交互式环境与约 20K 个复杂任务；在 Qwen3/3.5（8B–32B）上：类 Claw 基准最高 +11.9%、通用工具使用基准 +8.0%，同时推理 token 成本下降。另用 41 个通用工具使用场景作对照。给出“环境规模—收益”曲线，论证环境的质比量更重要。",
+ datasets:[["合成环境集（139 环境 / ~20K 任务）","沙盒隔离工作区+工具链，自动化合成、无人工环境工程","随论文开源（arXiv:2609.05576）"],["类 Claw 基准","系统级（跨环境执行、有状态工作区、异步任务循环）智能体基准","论文/项目页（arXiv:2609.05576）"],["通用工具使用场景（41 个对照）","通用工具使用能力的对照评测集","论文"]],
+ base:"沙盒工作区（代码）",paradigm:"规模-收益型",rel:"跨控制台长程运维问题定义同构；难度落在“系统级”一侧"},
+{name:"FACET",en:"容器状态作共享底座",ax:"2608.18580",
+ problem:"合成高质量终端任务难：每条任务耦合“指令+初始化环境+参考解法+可执行验证器”四件套；若构件由不一致假设生成，任务可能根本不可解，而验证器还在给虚构打分。",
+ method:"反向顺序：先重建 agent 技能为连贯、信息丰富的场景（恢复用户场景、跨技能依赖、中间状态与解法工作流）→先实现并修好可执行的容器环境→由活的容器状态派生指令、参考解法与验证器→执行式验证+定向修复（只修坏的那一个构件）。",
+ verify:"容器状态成为指令/解法/验证器的共享底座（三者接地于同一已实现执行状态）",
+ flow:["重建技能→\n连贯场景","先实现\n可执行容器环境","派生 指令/解法\n/验证器+验证修复","350 任务\n端到端产出率","释出 6,020 任务\n+Terminal-Bench增益"],
+ result:"350 个任务上端到端产出率 70.0%；公开释放 6,020 个终端任务与三个微调 checkpoint。微调 Qwen3.5 从 4B 到 27B，在 Terminal-Bench 2.1 上绝对增益 7.12 / 8.24 / 6.75 分；27B 模型达 47.57，接近大得多的 Qwen3.5-397B 的 49.06。",
+ datasets:[["合成终端任务（释出 6,020）","由容器状态底座派生的指令/解法/验证器三件套，公开释放","随论文开源（arXiv:2608.18580）"],["350 任务（产出率评测）","端到端产出率（任务是否真可解）的评测子集","论文"],["Terminal-Bench 2.1","真实终端环境基准，用于微调增益的外部验证","https://github.com/harbor-framework/terminal-bench"]],
+ base:"容器",paradigm:"端到端产出率/可解性型",rel:"“任务四件套不一致”是最易出现的质量问题；生成顺序可写进数据生产规范"},
+{name:"AWM",en:"Agent World Model（代码+SQL 环境）",ax:"2602.10090",
+ problem:"智能体训练规模化瓶颈是缺少多样且可靠的环境；真实环境贵难扩、人工缺多样性、LLM 模拟有幻觉且贵。",
+ method:"完全合成的代码驱动流水线：场景描述→用户任务→数据库 schema→工具接口（经 MCP 暴露）→验证代码（比对执行前后数据库状态作 RL 奖励）；代码跑不通就把错误喂回 LLM 自纠错。扩到 1,000 个环境 / ~10,000 个任务。",
+ verify:"SQL 数据库背书状态一致（真实可查，非“假装返回”）；状态比对即奖励",
+ flow:["场景→任务→\nDB schema→工具(MCP)","生成验证代码\n(状态比对奖励)","代码自纠错\n(错误回灌LLM)","扩到 1000 环境\n/~10K 任务","3 个工具基准\n(仅合成环境训练)"],
+ result:"在 3 个工具使用基准上评测；仅在合成环境（而非各基准自带环境）训练即取得强分布外泛化；开源 1,000 环境（训练用 526 个，Qwen3 4B/8B/14B）；74% 环境含至少一处 bug、约 4% RL rollout 遇运行时错误。",
+ datasets:[["1,000 合成环境 / ~10K 任务（开源）","代码驱动+SQL 背书+状态比对奖励，训练用 526 个","随论文开源（arXiv:2602.10090）"],["3 个工具使用基准（OOD 评测）","用于验证“仅合成环境训练→分布外泛化”的外部基准","论文随附"]],
+ base:"代码 + SQL",paradigm:"分布外泛化型",rel:"最该复刻的合成范式：云控制台操作天然有状态、可 MCP 化"},
+{name:"Agent-World",en:"自进化竞技场+MCP 工具",ax:"2604.18292",
+ problem:"开放世界工具环境天然组合式、有状态；静态/单工具环境不够用，“可扩展真实感+复杂环境合成”与“持续自进化训练机制”两瓶颈都未解决。",
+ method:"两部件：①智能体环境-任务发现——从数千真实环境主题深研挖掘“主题对齐的数据库+可执行工具集”，合成带可控难度的可验证任务（1,978 环境/19,822 工具）；②持续自进化训练——多环境 RL+自进化竞技场，自动识别能力缺口、动态合成新任务，形成“策略—环境”共同进化闭环。",
+ verify:"真实数据库+工具生态支撑状态可信；环境随训练自动生长",
+ flow:["真实DB+工具生态\n→可验证任务","合成 1978环境\n/19822 工具","多环境 RL\n+自进化竞技场","23 个智能体基准","指标：8B/14B 超\n专有模型&扩展基线"],
+ result:"在 23 个智能体基准（工具使用、AI 助手、软件工程、深研、推理）上评测；Agent-World-8B/14B 稳定超越强专有模型与环境扩展基线；给出环境多样性、进化轮数、任务难度与性能的清晰缩放关系。",
+ datasets:[["Agent-World 环境集（1,978 环境 / 19,822 工具）","由真实数据库+可执行工具集合成的可验证任务","随论文开源（arXiv:2604.18292）"],["23 个智能体基准","覆盖工具使用/AI 助手/软件工程/深研/推理的外部基准集合","论文"]],
+ base:"数据库 + 工具（MCP）",paradigm:"分布外泛化型",rel:"“自进化竞技场+真实工具生态”把 AWM 推进一步；环境驱动持续学习"},
+{name:"EnvScaler",en:"程序化合成+规则验证奖励",ax:"2601.05808",
+ problem:"训练工具交互智能体需要丰富多样的沙盒，但真实系统访问受限、LLM 模拟有幻觉、人工沙盒难扩展，且现有程序化方法缺自动质量评估。",
+ method:"两部件：①SkelBuilder——主题挖掘→可执行环境构建（规划状态与工具并编程实现）→双智能体（测试 agent+检查 agent）质量评估，多轮迭代直到通过率达标；②ScenGenerator——先生成初始数据库状态，再派生挑战性任务，并为每任务生成基于规则的轨迹验证函数（终态达标率即奖励）。",
+ verify:"规则验证函数（奖励来自“终态是否达标”，非模型裁判，避免 reward hacking）",
+ flow:["SkelBuilder\n主题挖掘→环境构建","双智能体\n质量评估迭代","ScenGenerator\n→规则验证奖励","191 环境/~7K 场景\n→Qwen3 SFT/RL","3 个工具基准\n(多轮多工具)"],
+ result:"合成 191 环境 / 约 7K 场景，用于 Qwen3 系列 SFT 与 RL；在 3 个工具使用基准上显著提升多轮多工具任务能力；论文用一张属性表明确对比三类环境（真实 / LLM 模拟 / 程序化）。",
+ datasets:[["191 环境 / ~7K 场景","程序化合成，SkelBuilder 质量评估 + ScenGenerator 规则验证奖励","随论文开源（arXiv:2601.05808）"],["3 个工具使用基准","多轮多工具任务能力的外部评测","论文随附"],["环境属性对比表","真实 / LLM 模拟 / 程序化 三类环境的横向属性对比","论文"]],
+ base:"沙盒（代码）",paradigm:"分布外泛化型",rel:"成本最低最稳的合成路线；规则验证奖励写进质量门槛"},
+{name:"LogicEnvGen",en:"逻辑驱动多样仿真",ax:"2601.13556",
+ problem:"仿真环境对具身智能体如同软件测试用例，但现有生成方法重视觉真实（物体多样、布局协调），忽视逻辑多样性——即同一任务目标下环境状态与条件的多变，导致评测不全。",
+ method:"LLM 驱动自顶向下：①行为计划推导（任务拆子任务、生成决策树式行为计划，每条根到叶路径是一种逻辑流）→②逻辑轨迹收集（组合各子任务决策路径合成多样逻辑轨迹，启发式剪枝去冗余）→③仿真环境构建（为每个逻辑轨迹实例化具体环境，并用 CSP 约束求解保证物体摆放的物理合理）。",
+ verify:"约束求解（CSP）保证物体摆放物理合理；先在抽象逻辑层穷举所有情形再实例化",
+ flow:["行为计划\n决策树(逻辑流)","逻辑轨迹组合\n+启发式剪枝","CSP 约束求解\n实例化环境","LogicEnvEval\n(25家庭任务)","指标：逻辑覆盖\n1.04–2.61×"],
+ result:"提出 LogicEnvEval 基准（4 指标：物理通过率/逻辑覆盖/场景有效/故障检测率），含 25 个家庭任务；LogicEnvGen 逻辑覆盖达基线 1.04–2.61×，故障检测率提升 4.00%–68.00%。",
+ datasets:[["LogicEnvEval（25 家庭任务）","4 指标：物理通过率 / 逻辑覆盖 / 场景有效 / 故障检测率","随论文开源（arXiv:2601.13556）"],["基线环境（对比）","用于对照逻辑覆盖与故障检测率提升","论文"]],
+ base:"约束求解环境（CSP）",paradigm:"难度可控/逻辑多样性型",rel:"“逻辑多样性=同一目标下多变环境状态”可迁移到云服务边界情形穷举"},
+{name:"InfiniteWeb",en:"统一规格+TCTDD",ax:"2601.04126",
+ problem:"GUI 智能体训练受限于合适环境稀缺；现有 Web 基准手工构建、规模小、难泛化；LLM 能写单页却写不出多页互联、功能正确、风格多样的完整网站。",
+ method:"自动大规模生成功能化 Web 环境：为一致性用统一规格（先由任务派生数据模型与接口，再按规格生成所有页面）；为正确性用任务驱动测试开发（TCTDD）（先由任务规格出测试用例，再迭代修代码直到测试全过）；为多样性用网站种子+参考设计图（VLM 提取风格）。并生成可验证任务评测器提供稠密 RL 奖励。",
+ verify:"TCTDD（任务驱动测试开发）——功能 bug 在生成立即被测试抓住；可验证评测器跟踪关键变量给稠密奖励",
+ flow:["统一规格\n(数据模型/接口)","TCTDD\n(测试驱动开发)","网站种子\n+参考设计图","WebGen-Bench\n+OSWorld等","指标：功能正确率\n~$1.93/站"],
+ result:"在 WebGen-Bench 上超越商业编码智能体；用生成环境训练 GUI 智能体，OSWorld +6.9%、Online-Mind2Web +5.7%、MobileWorld +3.9%；单站中位生成约 20 分钟、GPT-5 batch 计价约 $1.93/站。",
+ datasets:[["WebGen-Bench（101 指令 / 647 测试用例）","从零生成多文件网站代码库的功能正确性基准","https://github.com/mnluzimu/WebGen-Bench （arXiv:2505.03733）"],["OSWorld","真实计算机环境多模态智能体基准（369 任务，Ubuntu/Win/macOS VM）","https://github.com/xlang-ai/OSWorld （arXiv:2404.07972）"],["Online-Mind2Web","在线真实网站 Web 智能体基准（300 任务 / 136 网站）","https://github.com/OSU-NLP-Group/Online-Mind2Web （arXiv:2504.01382）"],["MobileWorld","移动端 GUI 智能体基准（用于 +3.9% 外部验证）","见论文引用"]],
+ base:"网站 / Web",paradigm:"端到端产出率/可解性型",rel:"Web/控制台环境合成直接范本：统一规格+TCTDD+可验证评测器三段式"},
+{name:"Environment Evolution",en:"off-policy 提难度",ax:"2609.04128",
+ problem:"从零合成的环境会随前沿模型变强而变得太简单：模型几乎每次都解出来，RL 拿不到区分优劣轨迹的梯度，环境只能丢弃，建造成本白费。",
+ method:"“环境进化”：离策略地逐代提升环境难度，并在训练中按谱系调度进化环境的生成。先从多轮学习目标推导出影响难度的三因素——场景新颖性、技能稀有性、执行长度——再用循环工程化的多智能体外壳沿这些方向逐步修改已有环境，围绕原始环境分布构建难度递增的谱系。",
+ verify:"off-policy 难度估计（难度成为环境结构自身属性，不需问任何模型）；双门控反馈环保可解性",
+ flow:["推导难度三因素\n(新颖/稀有/长度)","off-policy\n逐代提升难度","难度谱系\n训练中调度","Terminal-Bench 2.1\n(Qwen3.6)","指标：难度单调升\n+14.4/+18.0"],
+ result:"用 Hy4 preview、Claude Opus 5、GPT-5.6 Sol 三个架构无关模型做基于 rollout 的难度估计，证明难度对三者都单调上升；在 Qwen3.6-27B 与 Qwen3.6-35B-A3B 上做长程 RL，Terminal-Bench 2.1 分别提升 +14.4 / +18.0。未报告成本（论文缺口）。",
+ datasets:[["Terminal-Bench 2.1","真实终端环境基准，用于长程 RL 增益验证","https://github.com/harbor-framework/terminal-bench"],["难度谱系环境（逐代生成）","围绕原始环境分布构建难度递增的谱系，训练中调度","随论文开源（arXiv:2609.04128）"],["评测模型：Hy4 preview / Claude Opus 5 / GPT-5.6 Sol","架构无关模型，用于基于 rollout 的难度估计","论文"]],
+ base:"难度谱系（已有环境改造）",paradigm:"难度可控/进化型",rel:"“任务难度可控”最新最完整实现；三条难度轴可移植到云服务"},
+{name:"SPADE",en:"环境设计可学习+自博弈",ax:"2608.19197",
+ problem:"持续自我改进需要不断扩展、多样、自适应的目标池，但现有训练环境池（手工策划、静态合成或冻结验证器）在学习者变强时目标分布固定——智能体一旦耗尽固定题库就停止进步。",
+ method:"单一 LLM 扮演两个角色、共享一套策略、用 GRPO 端到端更新：Environment Designer 写出完整长程训练环境（可执行 Python 代码，带 Gym 风格 reset()/step() 接口，内含状态转移、奖励函数与验证代码）；Reasoning Agent 在其中学习。设计者奖励用基于提示的遗憾（hint-based regret）——agent 有/无“特权提示”时的回报差。",
+ verify:"hint-based regret 三分类防退化（高 regret=学习前沿；低regret+高回报=太简单；低regret+低回报=不可解，设计者被罚）；代码即环境",
+ flow:["单LLM双角色\n(设计者+推理agent)","设计者写\n可执行Python环境","hint-based regret\n自博弈奖励","8 留出基准\n+BFCL v4","指标：平均+5.3\n消融验证"],
+ result:"扩展到 30B 参数模型；在 8 个留出的数学/科学/代码/推理基准上平均比最强固定环境基线高 +5.3；工具使用设定上 BFCL v4 多轮 +5.7、ACEBench-Agent +13.9；游戏设定上相对最强基线的优势随模型规模增大。消融确认两必需组件：把设计者锚定到预训练语料采样的文档、赋予累积环境记忆。",
+ datasets:[["8 个留出基准（数学/科学/代码/推理）","留出的泛化评测集，避免与训练分布重叠","随论文开源（arXiv:2608.19197）"],["BFCL v4（多轮函数调用）","Berkeley 函数调用排行榜，多轮多步工具调用评测","https://github.com/ShishirPatil/gorilla （https://gorilla.cs.berkeley.edu/leaderboard）"],["ACEBench-Agent","可配置难度、轻量环境的智能体评测基准","ACE-Bench arXiv:2604.06111（configurable difficulty）"]],
+ base:"可执行 Python / Gym",paradigm:"自适应/自博弈型",rel:"“数据飞轮”最完整配方；把设计者锚定语料设成自家云 API 文档"},
+{name:"AgenticGameDev",en:"造游戏=数据引擎（2608.25518）",ax:"2608.25518",
+ problem:"世界模型扩规模主流做法“爬更多视频+加更多算力”，但爬来的视频只告诉你发生了什么、不给底下状态，只能拿 CLIP 分等模糊代理当奖励——有噪、有偏、可被钻空子。",
+ method:"让 agent 去造游戏，把造游戏的过程本身变成带质检的数据工厂：提出场景编辑→观察人类-引擎验证→把被接受或修复的多模态轨迹转成训练数据。提出 AWoMo（把开发者工作流内嵌到世界模型里的世界构建智能体）与 RLHEV（带人类-引擎验证的强化学习）：引擎检查提供密集结构奖励，开发者判断提供稀疏但高度对齐的接受信号。",
+ verify:"游戏引擎编码的场景即可执行世界规范——引擎高效检查碰撞/物理/可通行性/有界可玩性；每条开发轨迹自带引擎级真值",
+ flow:["agent 造游戏\n(AWoMo)","人类-引擎\n双重验证(RLHEV)","轨迹自带\n引擎级真值","UnitySceneBench(200)\n+跨引擎","指标：RLHEV最高分\nOOD正向"],
+ result:"控制实验：在 UnitySceneBench（200 例 Unity 资产编辑评估）上 RLHEV 取得最高分；泛化方面迁移学习有助于分布外偏移，Unreal 与 Godot 跨引擎实验给出正向信号；AWoMo 增强的训练提升了 R2R、Gymnasium MuJoCo、D4RL Gym-MuJoCo 上的具身表现。已发布智能体制品供复现。",
+ datasets:[["UnitySceneBench（200 例）","Unity 资产编辑评估集，RLHEV 控制实验靶面","随论文开源（arXiv:2608.25518）/ Unity"],["Unreal & Godot 跨引擎实验","跨引擎泛化（OOD）验证","论文"],["R2R / Gymnasium MuJoCo / D4RL Gym-MuJoCo","具身表现外部基准","论文引用"]],
+ base:"游戏引擎",paradigm:"端到端产出率/可解性型",rel:"“先生成控制台引擎(状态机)，再跑轨迹自带真值”与 CloudEmu 同源，可合成一条路线"}
+];
+
+const GROUP_ORDER=[
+ ["覆盖率/准确度型","以“覆盖度、准确率”为评测尺度的仿真器保真度评测",["CloudEmu"]],
+ ["规模-收益型","关注“环境的质 vs 量”对智能体收益的权衡",["EnvCraft"]],
+ ["端到端产出率/可解性型","以“任务是否真可解、端到端产出率、功能正确性”为硬指标",["FACET","InfiniteWeb","AgenticGameDev"]],
+ ["分布外泛化型","在自家合成环境训练、在外部基准验证 OOD 泛化",["AWM","Agent-World","EnvScaler"]],
+ ["难度可控/进化型","主动控制或进化环境难度，对抗模型变强后的饱和",["LogicEnvGen","Environment Evolution"]],
+ ["自适应/自博弈型","让环境设计本身可学习，随训练自适应生长",["SPADE"]]
+];
+const VERIF_GROUP=[
+ ["真云 oracle（真实云当裁判）",["CloudEmu"]],
+ ["真实可执行沙盒（非 LLM 假装返回）",["EnvCraft"]],
+ ["容器状态共享底座",["FACET"]],
+ ["SQL 数据库背书 / 状态比对",["AWM"]],
+ ["真实数据库+工具生态（MCP）",["Agent-World"]],
+ ["规则验证函数（终态达标=奖励）",["EnvScaler"]],
+ ["约束求解 CSP（物理合理性）",["LogicEnvGen"]],
+ ["TCTDD 测试驱动（生成立即抓 bug）",["InfiniteWeb"]],
+ ["off-policy 难度估计（结构属性）",["Environment Evolution"]],
+ ["hint-based regret 自博弈",["SPADE"]],
+ ["游戏引擎检查（密集结构奖励）",["AgenticGameDev"]]
+];
+const byname={}; PAPERS.forEach(p=>byname[p.name]=p);
+const ACCENT="#2A5A8C",VERIFY="#B5731F",RESULT="#2E7D32",NODE="#eef3f9",LINE="#9bb2cf";
+
+function wrap(text,n){const out=[];for(const seg of text.split("\n")){if(!seg){out.push("");continue;}let s=seg;while(s){out.push(s.slice(0,n));s=s.slice(n);}}return out;}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+function flowSvg(p){
+  const stages=p.flow,n=stages.length,node_w=205,gap=46,pad=22;
+  const W=pad*2+n*node_w+(n-1)*gap,H=372;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${esc(p.name)}评估流程">`;
+  s+=`<defs><style>.t{font:16px/1.3 'Microsoft YaHei',system-ui,sans-serif;fill:#1d2b3a}.n{font:700 15px system-ui;fill:#fff}.v{font:14px system-ui;fill:#fff}.r{font:13px system-ui;fill:#5a6b7d}</style></defs>`;
+  const cx=pad,cy=10,cw=W-pad*2,ch=34;
+  s+=`<rect x="${cx}" y="${cy}" width="${cw}" height="${ch}" rx="8" fill="${VERIFY}"/><text x="${cx+14}" y="${cy+22}" class="v">验证 / 奖励来源：${esc(p.verify)}</text>`;
+  const y0=66,nh=150;
+  for(let i=0;i<n;i++){
+    const x=pad+i*(node_w+gap),last=(i===n-1),fill=last?RESULT:ACCENT;
+    s+=`<rect x="${x}" y="${y0}" width="${node_w}" height="${nh}" rx="14" fill="${NODE}" stroke="${fill}" stroke-width="2.5"/>`;
+    s+=`<circle cx="${x+24}" cy="${y0+26}" r="16" fill="${fill}"/><text x="${x+24}" y="${y0+32}" class="n" text-anchor="middle">${i+1}</text>`;
+    let ty=y0+62;
+    for(const ln of wrap(stages[i],8)){ s+=`<text x="${x+node_w/2}" y="${ty}" class="t" text-anchor="middle">${esc(ln)}</text>`; ty+=22; }
+    if(!last){const ax=x+node_w+5,bx=x+node_w+gap-5; s+=`<line x1="${ax}" y1="${y0+nh/2}" x2="${bx-8}" y2="${y0+nh/2}" stroke="${LINE}" stroke-width="2.5"/><path d="M${bx-8} ${y0+nh/2-6} L${bx} ${y0+nh/2} L${bx-8} ${y0+nh/2+6} Z" fill="${LINE}"/>`;}
+  }
+  s+=`<text x="${pad}" y="${H-10}" class="r">↑ 末节点 = 对比基线 / 结果；其余为评测流程环节（蓝）</text></svg>`;
+  return s;
+}
+
+function dsRows(p){
+  return p.datasets.map(([a,b,c])=>{
+    const link=c.startsWith("http")?`<a href="${esc(c)}" target="_blank" rel="noopener">${esc(c)}</a>`:esc(c);
+    return `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td class="lk">${link}</td></tr>`;
+  }).join("");
+}
+
+function paperSlide(p){
+  return `<article class="slide" data-i="${esc(p.name)}">
+    <header class="ph"><span class="tag">${esc(p.paradigm)}</span>
+      <h2>${esc(p.name)} <span class="en">· ${esc(p.en)}</span></h2>
+      <div class="meta">arXiv:${esc(p.ax)} · <a href="https://arxiv.org/abs/${esc(p.ax)}" target="_blank" rel="noopener">https://arxiv.org/abs/${esc(p.ax)}</a> · 环境基底：${esc(p.base)}</div>
+    </header>
+    <div class="hero"><div class="svgbox">${flowSvg(p)}</div></div>
+    <div class="info">
+      <div class="infocol">
+        <h3>评估基准（指标与关键结果）</h3><p class="bench">${esc(p.result)}</p>
+        <h3>论文概要</h3>
+        <p class="mini"><b>问题：</b>${esc(p.problem)}</p>
+        <p class="mini"><b>方法：</b>${esc(p.method)}</p>
+        <p class="mini rel"><b>← 云运维关联：</b>${esc(p.rel)}</p>
+      </div>
+      <div class="infocol">
+        <h3>所用数据集</h3>
+        <table class="dt"><thead><tr><th>名称</th><th>内容</th><th>获取链接</th></tr></thead><tbody>${dsRows(p)}</tbody></table>
+      </div>
+    </div>
+  </article>`;
+}
+
+function catRows(){
+  let rows=[];
+  GROUP_ORDER.forEach((g,gi)=>{
+    const [name,desc,names]=g;
+    names.forEach((nm,k)=>{
+      const p=byname[nm],rs=p.result,key=rs.slice(0,60)+(rs.length>60?"…":"");
+      const cell=k===0?`<td rowspan="${names.length}" class="grp"><b>${gi+1}. ${esc(name)}</b><br><span>${esc(desc)}</span></td>`:"";
+      rows.push(`<tr>${cell}<td class="pn"><b>${esc(p.name)}</b><br><span class="en">${esc(p.en)}</span></td><td>${esc(p.base)}</td><td>${esc(p.verify)}</td><td>${esc(p.datasets.map(d=>d[0]).join("；"))}</td><td>${esc(key)}</td></tr>`);
+    });
+  });
+  return rows.join("");
+}
+function verifRows(){
+  let rows=[];
+  VERIF_GROUP.forEach(([v,names])=>{
+    names.forEach((nm,k)=>{
+      const p=byname[nm];
+      const cell=k===0?`<td rowspan="${names.length}" class="grp2">${esc(v)}</td>`:"";
+      rows.push(`<tr>${cell}<td class="pn"><b>${esc(p.name)}</b></td><td>${esc(p.base)}</td><td>${esc(p.paradigm)}</td></tr>`);
+    });
+  });
+  return rows.join("");
+}
+function summarySlide(){
+  return `<article class="slide" data-i="summary">
+    <header class="ph"><span class="tag">汇总</span><h2>分类大表与项目启示</h2></header>
+    <div class="sumscroll">
+      <h3>分类大表 ①：按评测范式归类</h3>
+      <table class="bigtable"><thead><tr><th>评测范式</th><th>论文</th><th>环境基底</th><th>验证/奖励来源</th><th>核心数据集</th><th>评测基准（摘要）</th></tr></thead><tbody>${catRows()}</tbody></table>
+      <h3>分类大表 ②：按验证/奖励来源归类</h3>
+      <table class="bigtable"><thead><tr><th>验证 / 奖励来源</th><th>论文</th><th>环境基底</th><th>评测范式</th></tr></thead><tbody>${verifRows()}</tbody></table>
+      <h3>对“上云服务智能体”项目的启示</h3>
+      <p class="mini"><b>1. 验证/奖励来源是第一位决策。</b> 11 篇共同经验：环境必须“真实可执行 + 状态可查”，奖励应来自状态比对或规则验证（AWM 的 SQL 比对、EnvScaler 的规则验证、FACET 的容器状态底座、InfiniteWeb 的 TCTDD），<b>避免用 LLM 当裁判（reward hacking）</b>。</p>
+      <p class="mini"><b>2. 与项目最直接同构的是 CloudEmu + AgenticGameDev。</b> “先生成云控制台的状态机/引擎，再在其上跑轨迹、轨迹自带真值”是同一技术路线的两端。</p>
+      <p class="mini"><b>3. 难度要跟着模型走。</b> Environment Evolution 的 off-policy 难度谱系、Agent-World 的自进化竞技场、SPADE 的可学习环境设计，都指向“环境驱动的数据飞轮”。</p>
+      <p class="mini"><b>4. 逻辑多样性方法论可迁移。</b> LogicEnvGen 的“同一目标下穷举环境状态/条件”，对应云服务的权限组合、状态先决条件、异常输入等边界情形穷举。</p>
+    </div>
+  </article>`;
+}
+
+// ---- 渲染分页 ----
+const stage=document.getElementById("stage");
+PAPERS.forEach(p=>stage.insertAdjacentHTML("afterbegin",paperSlide(p)));
+stage.insertAdjacentHTML("afterbegin",summarySlide());
+const slides=[].slice.call(document.querySelectorAll(".slide"));
+const N=slides.length;
+const prev=document.getElementById("prev"),next=document.getElementById("next");
+const dots=document.getElementById("dots"),counter=document.getElementById("counter");
+slides.forEach((_,i)=>{const b=document.createElement("button");b.onclick=()=>go(i);dots.appendChild(b);});
+let cur=0;
+function go(i){
+  cur=((i%N)+N)%N;
+  slides.forEach((s,k)=>s.classList.toggle("on",k===cur));
+  slides[cur].querySelectorAll(".info,.sumscroll,.svgbox").forEach(el=>el.scrollTop=0);
+  [].slice.call(dots.children).forEach((b,k)=>b.classList.toggle("on",k===cur));
+  prev.disabled=(cur===0); next.disabled=(cur===N-1);
+  counter.textContent=(cur+1)+" / "+N+(cur===N-1?"（汇总）":"");
+  document.title = cur===N-1 ? "环境模拟评测 · 汇总" : "环境模拟评测 · "+slides[cur].getAttribute("data-i");
+}
+prev.onclick=()=>go(cur-1); next.onclick=()=>go(cur+1);
+document.addEventListener("keydown",e=>{if(e.key==="ArrowLeft")go(cur-1);else if(e.key==="ArrowRight")go(cur+1);});
+go(0);
+
+// ---- 导出 Markdown ----
+function mdEsc(s){return String(s).replace(/\|/g,"\\|").replace(/\n/g," ");}
+function mermaidFlow(p){
+  const lines=["```mermaid","flowchart LR",
+    `  classDef acc fill:${ACCENT},color:#fff,stroke:#1d3a5c;`,
+    `  classDef res fill:${RESULT},color:#fff,stroke:#1d5a22;`,
+    `  classDef ver fill:${VERIFY},color:#fff,stroke:#8a541a;`];
+  lines.push(`  V["🔍 验证/奖励来源：${p.verify.replace(/"/g,"'")}"]:::ver`);
+  const ids=[];
+  p.flow.forEach((st,i)=>{
+    const lbl=st.replace(/\n/g,"<br>").replace(/"/g,"'");
+    const cls=i===p.flow.length-1?"res":"acc";
+    const id="S"+(i+1); ids.push(id);
+    lines.push(`  ${id}["${i+1}. ${lbl}"]:::${cls}`);
+  });
+  lines.push("  "+["V"].concat(ids).join(" --> "));
+  lines.push("```");
+  return lines.join("\n");
+}
+function mdPaper(p){
+  const ds=p.datasets.map(([a,b,c])=>`| ${mdEsc(a)} | ${mdEsc(b)} | ${mdEsc(c.startsWith("http")?c:c)} |`).join("\n");
+  return `### ${p.name} · ${p.en}\n\n`+
+    `- **arXiv：** [${p.ax}](https://arxiv.org/abs/${p.ax})　|　**环境基底：** ${p.base}　|　**评测范式：** ${p.paradigm}\n`+
+    `- **问题：** ${p.problem}\n- **方法：** ${p.method}\n- **验证 / 奖励来源：** ${p.verify}\n\n`+
+    `**评估流程示意图**\n\n${mermaidFlow(p)}\n\n`+
+    `**所用数据集**\n\n| 名称 | 内容 | 获取链接 |\n| --- | --- | --- |\n${ds}\n\n`+
+    `**评估基准（指标与关键结果）**\n\n${p.result}\n\n> **← 云运维关联：** ${p.rel}\n\n`;
+}
+function mdCatTable(){
+  let r="| 评测范式 | 论文 | 环境基底 | 验证/奖励来源 | 核心数据集 | 评测基准（摘要） |\n| --- | --- | --- | --- | --- | --- |\n";
+  GROUP_ORDER.forEach((g,gi)=>{
+    const [name,desc,names]=g;
+    names.forEach((nm,k)=>{
+      const p=byname[nm],rs=p.result,key=rs.slice(0,60)+(rs.length>60?"…":"");
+      const gcell=k===0?`**${gi+1}. ${name}**<br><span>${desc}</span>`:"";
+      r+=`| ${gcell} | ${p.name} / ${p.en} | ${p.base} | ${p.verify} | ${p.datasets.map(d=>d[0]).join("；")} | ${key} |\n`;
+    });
+  });
+  return r;
+}
+function mdVerifTable(){
+  let r="| 验证 / 奖励来源 | 论文 | 环境基底 | 评测范式 |\n| --- | --- | --- | --- |\n";
+  VERIF_GROUP.forEach(([v,names])=>{
+    names.forEach((nm,k)=>{const p=byname[nm];r+=`| ${k===0?v:""} | ${p.name} | ${p.base} | ${p.paradigm} |\n`;});
+  });
+  return r;
+}
+function buildMd(){
+  let md="# 环境模拟评测方法汇总文档\n\n";
+  md+="> 数据模拟文献调研 · “环境生成（syn / 环境合成）”类 11 篇论文的评估章节分析。\n> 逐篇提取其评估章节（网页“五问解读”之 Q4：如何证明有效性 / 用什么数据集）。\n\n";
+  md+="## 范围说明\n\n网页中的“环境合成”对应分类体系的 **环境生成（syn）** 类，共 **11** 篇论文。每篇给出：① 评估流程示意图（Mermaid）；② 所用数据集（名称 / 内容 / 获取链接）；③ 评估基准（指标与关键结果）。文末附两张分类大表与项目启示。\n\n";
+  md+="## 一、逐篇评估分析（11 篇）\n\n"+PAPERS.map(mdPaper).join("");
+  md+="## 二、分类大表 ①：按评测范式归类\n\n“类似的进行分类”：把评估思路相近的论文归为一组，便于横向对比其评测逻辑。\n\n"+mdCatTable()+"\n";
+  md+="## 三、分类大表 ②：按验证 / 奖励来源归类\n\n环境合成的可信度，几乎全部取决于“用什么来当裁判”。下表按验证 / 奖励来源分组。\n\n"+mdVerifTable()+"\n";
+  md+="## 四、对“上云服务智能体”项目的启示\n\n";
+  md+="1. **验证 / 奖励来源是第一位决策。** 11 篇共同经验：环境必须“真实可执行 + 状态可查”，奖励应来自状态比对或规则验证（AWM 的 SQL 比对、EnvScaler 的规则验证、FACET 的容器状态底座、InfiniteWeb 的 TCTDD），**避免用 LLM 当裁判（reward hacking）**。\n";
+  md+="2. **与项目最直接同构的是 CloudEmu + AgenticGameDev。** “先生成云控制台的状态机 / 引擎，再在其上跑轨迹、轨迹自带真值”是同一技术路线的两端。\n";
+  md+="3. **难度要跟着模型走。** Environment Evolution 的 off-policy 难度谱系、Agent-World 的自进化竞技场、SPADE 的可学习环境设计，都指向“环境驱动的数据飞轮”。\n";
+  md+="4. **逻辑多样性方法论可迁移。** LogicEnvGen 的“同一目标下穷举环境状态 / 条件”，对应云服务的权限组合、状态先决条件、异常输入等边界情形穷举。\n\n";
+  md+="---\n\n*数据来源：数据模拟文献调研 / 论文分类（树与表格）网页（环境生成 syn 类）。外部基准链接经 WebSearch 核验；各论文自身合成数据集均“随论文开源”，以对应 arXiv 编号为准。本文为评测方法汇总，非论文全文复现。*\n";
+  return md;
+}
+document.getElementById("exportMd").onclick=function(){
+  const blob=new Blob([buildMd()],{type:"text/markdown;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download="环境模拟评测方法汇总.md";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+</script>
+</body>
+</html>

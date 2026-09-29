@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能体训练 · 四方法维度方法图谱</title>
+<style>
+  :root{
+    --traj:#2563eb;   /* 轨迹生成 */
+    --reuse:#16a34a;  /* 环境复用 */
+    --syn:#7c3aed;    /* 环境生成 */
+    --bench:#ea580c;  /* 基准测评 */
+    --ink:#1f2430; --sub:#5b6472; --line:#e4e8f0; --bg:#f7f9fc; --card:#ffffff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6}
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 22px 80px}
+  h1{font-size:27px;margin:0 0 6px;letter-spacing:.5px}
+  h2{font-size:20px;margin:42px 0 14px;padding-left:12px;border-left:5px solid var(--syn)}
+  h3{font-size:15px;color:var(--sub);font-weight:600;margin:18px 0 8px}
+  p.lead{color:var(--sub);margin:4px 0 0;font-size:14px}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 4px}
+  .chip{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;
+        padding:5px 12px;border-radius:999px;color:#fff;background:#ccc}
+  .chip.traj{background:var(--traj)} .chip.reuse{background:var(--reuse)}
+  .chip.syn{background:var(--syn)} .chip.bench{background:var(--bench)}
+  .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .flow-box{background:var(--card);border:1px solid var(--line);border-radius:14px;
+            padding:14px;margin-top:18px;box-shadow:0 2px 10px rgba(20,30,60,.05)}
+  svg{max-width:100%;height:auto;display:block}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px;
+        background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 1px 6px rgba(20,30,60,.05)}
+  th,td{border:1px solid var(--line);padding:9px 11px;vertical-align:top;text-align:left}
+  thead th{background:#2b3340;color:#fff;font-weight:600;font-size:13px}
+  tbody tr:nth-child(even){background:#fafbfe}
+  td .n{font-weight:700;color:var(--sub)}
+  .tag{display:inline-block;font-size:11.5px;font-weight:700;color:#fff;padding:2px 8px;
+       border-radius:6px;white-space:nowrap}
+  .tag.traj{background:var(--traj)} .tag.reuse{background:var(--reuse)}
+  .tag.syn{background:var(--syn)} .tag.bench{background:var(--bench)}
+  .stagebadge{display:inline-block;font-size:11px;font-weight:700;color:#fff;
+       background:#3a4250;padding:2px 7px;border-radius:6px;margin-right:3px}
+  .prob{color:#b91c1c;font-weight:600}
+  .fix{color:#15803d;font-weight:600}
+  .note{font-size:12.5px;color:var(--sub);background:#eef3fb;border-left:4px solid var(--traj);
+        padding:10px 14px;border-radius:0 8px 8px 0;margin-top:12px}
+  footer{margin-top:50px;font-size:12px;color:var(--sub);border-top:1px solid var(--line);padding-top:14px}
+  .kpis{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+  .kpi{flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);border-radius:12px;
+       padding:14px 16px;text-align:center}
+  .kpi b{display:block;font-size:26px;color:var(--syn)}
+  .kpi span{font-size:12.5px;color:var(--sub)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>智能体训练 · 四方法维度方法图谱</h1>
+  <p class="lead">以「轨迹生成 · 环境复用 · 环境生成 · 基准测评」四个方法维度，串起一条智能体训练流水线，
+     在每个阶段标出常见问题，并指出由哪些方法维度、哪些论文去解决。下方给出 27 篇论文逐篇映射，以及适配
+     「上云服务智能体」训练的问题→方法集合。</p>
+
+  <div class="legend">
+    <span class="chip traj">轨迹生成</span>
+    <span class="chip reuse">环境复用</span>
+    <span class="chip syn">环境生成</span>
+    <span class="chip bench">基准测评</span>
+    <span class="chip" style="background:#b91c1c">常见问题（红色 callout）</span>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><b>5</b><span>训练阶段：建模→采集→训练→评测→部署</span></div>
+    <div class="kpi"><b>4</b><span>方法维度（对应站内 4 个分类）</span></div>
+    <div class="kpi"><b>27</b><span>已收录论文逐篇映射</span></div>
+    <div class="kpi"><b>6</b><span>上云智能体高频问题→方法集合</span></div>
+  </div>
+
+  <!-- ============ 流程图 ============ -->
+  <h2>一、智能体训练流程图（阶段 · 问题 · 四方法解法）</h2>
+  <div class="flow-box">
+  <svg viewBox="0 0 1240 690" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif">
+    <defs>
+      <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#9aa3b2"/>
+      </marker>
+      <style>
+        .stg{fill:#fff;stroke-width:2.4}
+        .stgT{font-size:15px;font-weight:800;fill:#1f2430}
+        .act{font-size:11.5px;fill:#5b6472}
+        .colH{font-size:13px;font-weight:800;fill:#2b3340}
+        .pcT{font-size:12px;font-weight:800;fill:#b91c1c}
+        .pc{font-size:11px;fill:#7a2424}
+        .pill{font-size:10.5px;font-weight:700;fill:#fff}
+        .lg{font-size:12.5px;font-weight:700}
+      </style>
+    </defs>
+
+    <!-- 阶段标题 -->
+    <text x="140"  y="42" class="colH" text-anchor="middle">阶段 1 · 环境构建</text>
+    <text x="380"  y="42" class="colH" text-anchor="middle">阶段 2 · 轨迹采集</text>
+    <text x="620"  y="42" class="colH" text-anchor="middle">阶段 3 · 模型训练</text>
+    <text x="860"  y="42" class="colH" text-anchor="middle">阶段 4 · 评测验证</text>
+    <text x="1100" y="42" class="colH" text-anchor="middle">阶段 5 · 部署对齐</text>
+
+    <!-- 方法胶囊（每行一个阶段） -->
+    <!-- S1 -->
+    <rect x="20"  y="60" width="62" height="20" rx="10" fill="#7c3aed"/><text x="51"  y="74" class="pill" text-anchor="middle">环境生成</text>
+    <rect x="88"  y="60" width="62" height="20" rx="10" fill="#16a34a"/><text x="119" y="74" class="pill" text-anchor="middle">环境复用</text>
+    <!-- S2 -->
+    <rect x="270" y="60" width="62" height="20" rx="10" fill="#2563eb"/><text x="301" y="74" class="pill" text-anchor="middle">轨迹生成</text>
+    <rect x="338" y="60" width="62" height="20" rx="10" fill="#7c3aed"/><text x="369" y="74" class="pill" text-anchor="middle">环境生成</text>
+    <rect x="406" y="60" width="62" height="20" rx="10" fill="#16a34a"/><text x="437" y="74" class="pill" text-anchor="middle">环境复用</text>
+    <!-- S3 -->
+    <rect x="510" y="60" width="62" height="20" rx="10" fill="#2563eb"/><text x="541" y="74" class="pill" text-anchor="middle">轨迹生成</text>
+    <rect x="578" y="60" width="62" height="20" rx="10" fill="#7c3aed"/><text x="609" y="74" class="pill" text-anchor="middle">环境生成</text>
+    <rect x="646" y="60" width="62" height="20" rx="10" fill="#16a34a"/><text x="677" y="74" class="pill" text-anchor="middle">环境复用</text>
+    <!-- S4 -->
+    <rect x="820" y="60" width="62" height="20" rx="10" fill="#ea580c"/><text x="851" y="74" class="pill" text-anchor="middle">基准测评</text>
+    <!-- S5 -->
+    <rect x="1050" y="60" width="62" height="20" rx="10" fill="#ea580c"/><text x="1081" y="74" class="pill" text-anchor="middle">基准测评</text>
+    <rect x="1050" y="86" width="62" height="20" rx="10" fill="#7c3aed"/><text x="1081" y="100" class="pill" text-anchor="middle">环境生成</text>
+    <rect x="1050" y="112" width="62" height="20" rx="10" fill="#16a34a"/><text x="1081" y="126" class="pill" text-anchor="middle">环境复用</text>
+
+    <!-- 阶段框 -->
+    <rect x="40"  y="150" width="200" height="112" rx="12" class="stg" stroke="#7c3aed"/>
+    <rect x="280" y="150" width="200" height="112" rx="12" class="stg" stroke="#2563eb"/>
+    <rect x="520" y="150" width="200" height="112" rx="12" class="stg" stroke="#2563eb"/>
+    <rect x="760" y="150" width="200" height="112" rx="12" class="stg" stroke="#ea580c"/>
+    <rect x="1000" y="150" width="200" height="112" rx="12" class="stg" stroke="#ea580c"/>
+
+    <text x="140"  y="182" class="stgT" text-anchor="middle">搭建训练环境</text>
+    <text x="140"  y="206" class="act" text-anchor="middle">合成/复用可交互、</text>
+    <text x="140"  y="223" class="act" text-anchor="middle">可执行、有状态的</text>
+    <text x="140"  y="240" class="act" text-anchor="middle">沙盒环境</text>
+
+    <text x="380"  y="182" class="stgT" text-anchor="middle">采集经验轨迹</text>
+    <text x="380"  y="206" class="act" text-anchor="middle">生成 / 收集 指令、</text>
+    <text x="380"  y="223" class="act" text-anchor="middle">推理-行动交错、</text>
+    <text x="380"  y="240" class="act" text-anchor="middle">API 调用序列</text>
+
+    <text x="620"  y="182" class="stgT" text-anchor="middle">训练策略模型</text>
+    <text x="620"  y="206" class="act" text-anchor="middle">SFT（合成轨迹）+</text>
+    <text x="620"  y="223" class="act" text-anchor="middle">RL（可验证/世界</text>
+    <text x="620"  y="240" class="act" text-anchor="middle">模型奖励）</text>
+
+    <text x="860"  y="182" class="stgT" text-anchor="middle">评测与验证</text>
+    <text x="860"  y="206" class="act" text-anchor="middle">多维、可复现、</text>
+    <text x="860"  y="223" class="act" text-anchor="middle">程序化验证的真实</text>
+    <text x="860"  y="240" class="act" text-anchor="middle">任务基准</text>
+
+    <text x="1100" y="182" class="stgT" text-anchor="middle">部署与对齐</text>
+    <text x="1100" y="206" class="act" text-anchor="middle">真机对照 + 监控</text>
+    <text x="1100" y="223" class="act" text-anchor="middle">对齐，缩小</text>
+    <text x="1100" y="240" class="act" text-anchor="middle">仿真-真实差距</text>
+
+    <!-- 箭头 -->
+    <line x1="244" y1="206" x2="276" y2="206" stroke="#9aa3b2" stroke-width="2.5" marker-end="url(#ar)"/>
+    <line x1="484" y1="206" x2="516" y2="206" stroke="#9aa3b2" stroke-width="2.5" marker-end="url(#ar)"/>
+    <line x1="724" y1="206" x2="756" y2="206" stroke="#9aa3b2" stroke-width="2.5" marker-end="url(#ar)"/>
+    <line x1="964" y1="206" x2="996" y2="206" stroke="#9aa3b2" stroke-width="2.5" marker-end="url(#ar)"/>
+
+    <!-- 问题 callout -->
+    <g>
+      <!-- S1 -->
+      <rect x="40" y="290" width="200" height="170" rx="10" fill="#fdecec" stroke="#f0b4b4"/>
+      <text x="54" y="312" class="pcT">常见问题</text>
+      <text x="54" y="336" class="pc">· 真实云测试贵 / 危险 / 不可复现</text>
+      <text x="54" y="360" class="pc">· 手工建模覆盖不足（如 AWS 240+ 服务）</text>
+      <text x="54" y="384" class="pc">· 合成环境有幻觉 / 过简单</text>
+      <text x="54" y="408" class="pc">· 环境静态、随模型变强而过时</text>
+      <text x="54" y="432" class="pc">· 缺逻辑/状态多样性的评测</text>
+      <!-- S2 -->
+      <rect x="280" y="290" width="200" height="170" rx="10" fill="#fdecec" stroke="#f0b4b4"/>
+      <text x="294" y="312" class="pcT">常见问题</text>
+      <text x="294" y="336" class="pc">· 指令/轨迹数据贵且有限</text>
+      <text x="294" y="360" class="pc">· 推理与行动脱节</text>
+      <text x="294" y="384" class="pc">· 闭源模型合成不可复现</text>
+      <text x="294" y="408" class="pc">· 多源轨迹异构难统一</text>
+      <text x="294" y="432" class="pc">· 开放式任务缺可验证奖励</text>
+      <!-- S3 -->
+      <rect x="520" y="290" width="200" height="170" rx="10" fill="#fdecec" stroke="#f0b4b4"/>
+      <text x="534" y="312" class="pcT">常见问题</text>
+      <text x="534" y="336" class="pc">· 奖励稀疏 / 分布漂移</text>
+      <text x="534" y="360" class="pc">· 无 checker，难判对错</text>
+      <text x="534" y="384" class="pc">· 世界模型奖励模糊可钻空子</text>
+      <text x="534" y="408" class="pc">· 训练不稳定、可验证性瓶颈</text>
+      <!-- S4 -->
+      <rect x="760" y="290" width="200" height="170" rx="10" fill="#fdecec" stroke="#f0b4b4"/>
+      <text x="774" y="312" class="pcT">常见问题</text>
+      <text x="774" y="336" class="pc">· 基准被刷爆 / 脱离真实</text>
+      <text x="774" y="360" class="pc">· 缺 CLI/Web/跨 OS 可复现环境</text>
+      <text x="774" y="384" class="pc">· 不测用户交互与规则遵循</text>
+      <text x="774" y="408" class="pc">· 缺长时域严格评测</text>
+      <!-- S5 -->
+      <rect x="1000" y="290" width="200" height="170" rx="10" fill="#fdecec" stroke="#f0b4b4"/>
+      <text x="1014" y="312" class="pcT">常见问题</text>
+      <text x="1014" y="336" class="pc">· 仿真-真实差距（sim-to-real）</text>
+      <text x="1014" y="360" class="pc">· 部署后行为漂移</text>
+      <text x="1014" y="384" class="pc">· 无持续真机对照评测</text>
+      <text x="1014" y="408" class="pc">· 云 API 演进导致环境过时</text>
+    </g>
+
+    <!-- 解法回指箭头（彩线：方法维度 -> 问题） -->
+    <line x1="119" y1="82" x2="119" y2="288" stroke="#16a34a" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <line x1="51"  y1="82" x2="51"  y2="288" stroke="#7c3aed" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <line x1="301" y1="82" x2="301" y2="288" stroke="#2563eb" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <line x1="369" y1="82" x2="369" y2="288" stroke="#7c3aed" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <line x1="437" y1="82" x2="437" y2="288" stroke="#16a34a" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <line x1="851" y1="82" x2="851" y2="288" stroke="#ea580c" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <line x1="1081" y1="126" x2="1081" y2="288" stroke="#7c3aed" stroke-width="1.6" stroke-dasharray="5 4"/>
+
+    <!-- 闭环：部署 -> 反馈到环境构建 -->
+    <path d="M1100,262 C1230,300 1230,520 1100,540" fill="none" stroke="#9aa3b2" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ar)"/>
+    <text x="1140" y="415" font-size="11" fill="#9aa3b2" transform="rotate(90 1140 415)">持续评测→环境更新</text>
+
+    <!-- 图例 -->
+    <g transform="translate(40,600)">
+      <rect x="0" y="0" width="14" height="14" rx="3" fill="#2563eb"/><text x="22" y="11" class="lg">轨迹生成</text>
+      <rect x="120" y="0" width="14" height="14" rx="3" fill="#16a34a"/><text x="142" y="11" class="lg">环境复用</text>
+      <rect x="240" y="0" width="14" height="14" rx="3" fill="#7c3aed"/><text x="262" y="11" class="lg">环境生成</text>
+      <rect x="360" y="0" width="14" height="14" rx="3" fill="#ea580c"/><text x="382" y="11" class="lg">基准测评</text>
+      <rect x="500" y="0" width="14" height="14" rx="3" fill="#fdecec" stroke="#f0b4b4"/><text x="522" y="11" class="lg">常见问题</text>
+    </g>
+  </svg>
+  </div>
+  <div class="note">读图提示：每个阶段的<b>彩色胶囊</b>是该阶段主要由哪些方法维度出手；<b>红色 callout</b> 是此阶段最易出现的典型问题；虚线把方法维度「指回」它要解决的问题。阶段 5 的虚线闭环表示：部署后的真实评测会持续倒逼环境更新（对应 Environment Evolution / SPADE / CloudEmu 文档驱动自愈）。</div>
+
+  <!-- ============ 方法维度 × 阶段 矩阵 ============ -->
+  <h2>二、四方法维度 × 训练阶段 作用矩阵</h2>
+  <table>
+    <thead><tr><th style="width:16%">方法维度</th><th style="width:17%">主战阶段</th><th>核心作用</th><th style="width:30%">代表论文（站内编号）</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag traj">轨迹生成</span></td><td>阶段 2 · 轨迹采集<br>（阶段 3 喂 SFT）</td>
+        <td>用模型<b>自生成/合成</b>指令、推理-行动交错轨迹、API 调用序列，低成本扩充训练数据；并以可验证奖励、可执行反馈替代模糊奖励。</td>
+        <td>21 Self-Instruct · 22 ReAct · 23 FireAct · 24 AgentOhana · 25 AutoAct · 8 Agentic Game Dev · 9 RLSVR/SpyRL</td></tr>
+      <tr><td><span class="tag reuse">环境复用</span></td><td>阶段 1 · 环境构建<br>（阶段 3 稳定训练）</td>
+        <td>复用<b>已有模拟器 / harness / 已累积轨迹</b>，避免从零搭建；对环境自身弱点做自省与自改进，提供可复现训练场。</td>
+        <td>2 Terminal-Universe · 5 EnvHarness（亦可复用 CloudSim/SimGrid 等经典云模拟器）</td></tr>
+      <tr><td><span class="tag syn">环境生成</span></td><td>阶段 1 · 环境构建<br>（阶段 2/3/5 支撑）</td>
+        <td><b>自动合成</b>可交互、可执行、有状态、随模型演化的环境与任务；LLM/世界模型当环境本身，提供密集训练信号与 sim-to-real oracle。</td>
+        <td>1 EnvCraft · 3 Environment Evolution · 4 CloudEmu · 6 SPADE · 7 FACET · 10 ESAT · 16 AWM · 17 Agent-World · 18 EnvScaler · 19 LogicEnvGen · 20 InfiniteWeb · 26 Simia</td></tr>
+      <tr><td><span class="tag bench">基准测评</span></td><td>阶段 4 · 评测验证<br>（阶段 5 真机对照）</td>
+        <td>提供<b>多维、可复现、程序化验证</b>的真实任务基准；量化能力、防过拟合、测用户交互与规则遵循、做长时域严格评测。</td>
+        <td>11 AgentBench · 12 SWE-bench · 13 WebArena · 14 τ-bench · 15 OSWorld · 27 Terminal-Bench</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ============ 27 篇逐篇映射 ============ -->
+  <h2>三、27 篇论文逐篇映射（解决的问题 → 所处阶段 → 对应方法维度）</h2>
+  <table>
+    <thead><tr>
+      <th style="width:4%">#</th><th style="width:15%">论文</th><th style="width:9%">方法维度</th>
+      <th style="width:9%">主战阶段</th><th style="width:33%">解决的问题</th><th style="width:30%">关键解法</th>
+    </tr></thead>
+    <tbody>
+      <tr><td class="n">1</td><td>EnvCraft</td><td><span class="tag syn">环境生成</span></td><td><span class="stagebadge">S1</span></td>
+        <td>现有环境只到「应用级工具端点」，撑不起系统级（claw-like）智能体必需的跨环境执行、有状态工作区与异步任务循环。</td>
+        <td>环境合成引擎 + 拓扑感知数据生成引擎，自动造 139 个交互式环境与连贯任务轨迹。</td></tr>
+      <tr><td class="n">2</td><td>Terminal-Universe</td><td><span class="tag reuse">环境复用</span></td><td><span class="stagebadge">S2</span><span class="stagebadge">S4</span></td>
+        <td>真实可执行环境稀缺；轨迹只是冻结示范，质量受限于生成策略，且无法核查它对代码库的修改是否正确。</td>
+        <td>复用海量终端轨迹建训练集，并将轨迹与环境对齐做正确性校验。</td></tr>
+      <tr><td class="n">3</td><td>Environment Evolution</td><td><span class="tag syn">环境生成</span></td><td><span class="stagebadge">S1</span></td>
+        <td>从零合成的环境随前沿模型变强而过简单，RL 拿不到区分优劣的梯度，环境只能丢弃、建造成本白费。</td>
+        <td>难度随学习者演化的环境进化机制，保持训练分布多样性。</td></tr>
+      <tr><td class="n">4</td><td>CloudEmu</td><td><span class="tag syn">环境生成</span></td><td><span class="stagebadge">S1</span><span class="stagebadge">S5</span></td>
+        <td>DevOps 程序测试必须打真实云，贵/危险；人工云模拟器覆盖不足（AWS 240+ 服务，最先进仅覆盖 95 个）。</td>
+        <td>神经符号代码合成自动造云模拟器 + 真云 oracle 自测自愈，覆盖/精度超 LocalStack。</td></tr>
+      <tr><td class="n">5</td><td>EnvHarness</td><td><span class="tag reuse">环境复用</span></td><td><span class="stagebadge">S1</span><span class="stagebadge">S3</span></td>
+        <td>手工静态环境视而不见自身弱点，随智能体改进迅速落后；近期生成法仍产出静态环境。</td>
+        <td>可复用环境 harness + 对环境的自省/自改进，提供稳定可复现训练场。</td></tr>
+      <tr><td class="n">6</td><td>SPADE</td><td><span class="tag syn">环境生成</span></td><td><span class="stagebadge">S1</span></td>
+        <td>训练环境池（手工/静态合成/冻结验证器）目标分布固定，智能体耗尽题库即停步。</td>
+        <td>自扩展、多样、自适应的目标池，持续生成任务。</td></tr>
+      <tr><td class="n">7</td><td>FACET</td><td><span class="tag syn">环境生成</span></td><td><span class="stagebadge">S1</span></td>
+        <td>任务「指令+初始环境+参考解+验证器」四件套若由不一致假设生成，会不可解且验证器虚构打分。</td>
+        <td>高质量终端任务四件套联合合成 + 一致性验证，杜绝不可解任务。</td></tr>
+      <tr><td class="n">8</td><td>Agentic Game Dev</td><td><span class="tag traj">轨迹生成</span></td><td><span class="stagebadge">S2</span><span class="stagebadge">S3</span></td>
+        <td>世界模型奖励靠 CLIP 分等模糊代理，有噪、有偏、可钻空子。</td>
+        <td>借鉴代码智能体：用编译器/测试/运行时等可执行反馈替代模糊奖励。</td></tr>
+      <tr><td class="n">9</td><td>RLSVR / SpyRL</td><td><span class="tag traj">轨迹生成</span></td><td><span class="stagebadge">S2</span><span class="stagebadge">S3</span></td>
+        <td>RLVR 只在数学/代码有效（可判定）；开放式任务无 checker，退回偏好/裁判模型带来偏差与天花板。瓶颈是可验证性。</td>
+        <td>可验证奖励（RLVR）+ 过程验证，扩展「可判定域」让自改进不被判卷人卡住。</td></tr>
+      <tr><td class="n">10</td><td>ESAT</td><td><span class="tag syn">环境生成</span></td><td><span class="stagebadge">S1</span><span class="stagebadge">S2</span></td>
+        <td>训练 API 智能体需海量多步轨迹，但环境创建与数据合成紧耦合，是扩展性主要瓶颈。</td>
+        <td>解耦环境创建与数据合成，自动造 API 调用多步轨迹（指令/读写/结果/响应）。</td></tr>
+      <tr><td class="n">11</td><td>AgentBench</td><td><span class="tag bench">基准测评</span></td><td><span class="stagebadge">S4</span></td>
+        <td>缺在交互式环境里系统量化推理与决策能力的基准；多数评测静态/单环境，无法横向比较。</td>
+        <td>多维、可复现、覆盖多种真实环境的统一评测框架。</td></tr>
+      <tr><td class="n">12</td><td>SWE-bench</td><td><span class="tag bench">基准测评</span></td><td><span class="stagebadge">S4</span></td>
+        <td>LM 基准被刷爆、脱离真实；真实软件工程可持续但缺可执行评测环境。</td>
+        <td>真实 PR + 可执行测试自动验证（既难到能难住模型，又易自动验证）。</td></tr>
+      <tr><td class="n">13</td><td>WebArena</td><td><span class="tag bench">基准测评</span></td><td><span class="stagebadge">S4</span></td>
+        <td>Web 智能体环境过度简化、功能残缺、多为静态缓存，与真实 Web 脱节。</td>
+        <td>自托管真实 Web + 程序化功能验证，保证真实可复现。</td></tr>
+      <tr><td class="n">14</td><td>τ-bench</td><td><span class="tag bench">基准测评</span></td><td><span class="stagebadge">S4</span></td>
+        <td>现有基准不测智能体与真实用户的动态交互、也不测其遵循领域规则的能力。</td>
+        <td>用户模拟 + 领域规则 + 随机性，在「有用户、有规则」条件下评测一致性。</td></tr>
+      <tr><td class="n">15</td><td>OSWorld</td><td><span class="tag bench">基准测评</span></td><td><span class="stagebadge">S4</span></td>
+        <td>现有基准无交互环境或只限特定应用，无法覆盖真实计算机使用的多样与复杂。</td>
+        <td>跨 OS、跨应用、可执行的统一真实计算机环境。</td></tr>
+      <tr><td class="n">16</td><td>AWM</td><td><span class="tag syn">环境生成</span></td><td><span class="stagebadge">S1</span></td>
+        <td>规模化瓶颈是缺多样可靠环境；真实环境贵、人工环境缺多样、LLM 模拟有幻觉且贵。</td>
+        <td>抽象世界模型 + 可复用模块合成多样可靠环境。</td></tr>
+      <tr><td class="n">17</td><td>Agent-World</td><td><span class="tag syn">环境生成</span></td><td><span class="stagebadge">S1</span></td>
+        <td>开放世界工具环境天然组合式、有状态；静态/单工具不够，且「可扩展真实感 + 自进化训练」两瓶颈未解。</td>
+        <td>组合式有状态工具环境 + 持续自进化训练机制。</td></tr>
+      <tr><td class="n">18</td><td>EnvScaler</td><td><span class="tag syn">环境生成</span></td><td><span class="stagebadge">S1</span></td>
+        <td>真实系统访问受限、LLM 模拟有幻觉、人工沙盒难扩展，且程序化方法缺自动质量评估。</td>
+        <td>可扩展沙盒合成 + 自动质量评估。</td></tr>
+      <tr><td class="n">19</td><td>LogicEnvGen</td><td><span class="tag syn">环境生成</span></td><td><span class="stagebadge">S1</span></td>
+        <td>仿真环境重「视觉真实」而轻「逻辑多样性」（同目标下状态/条件多变），导致评测不全。</td>
+        <td>强调逻辑多样性，显式构造多变的状态与条件。</td></tr>
+      <tr><td class="n">20</td><td>InfiniteWeb</td><td><span class="tag syn">环境生成</span></td><td><span class="stagebadge">S1</span></td>
+        <td>GUI 智能体训练受限于环境稀缺；Web 基准手工、规模小、难泛化；LLM 写不出多页互联的正确网站。</td>
+        <td>自动生成多页互联、功能正确、风格多样的完整网站环境。</td></tr>
+      <tr><td class="n">21</td><td>Self-Instruct</td><td><span class="tag traj">轨迹生成</span></td><td><span class="stagebadge">S2</span></td>
+        <td>指令微调依赖昂贵、有限的人工标注指令数据，量与多样性都不足。</td>
+        <td>模型自生成指令→回复，bootstrap 低成本指令数据。</td></tr>
+      <tr><td class="n">22</td><td>ReAct</td><td><span class="tag traj">轨迹生成</span></td><td><span class="stagebadge">S2</span></td>
+        <td>推理（CoT）与行动此前分开：纯行动缺推理、纯推理缺外部交互。</td>
+        <td>在同一条轨迹里交错推理与行动（思考→动作→观察）。</td></tr>
+      <tr><td class="n">23</td><td>FireAct</td><td><span class="tag traj">轨迹生成</span></td><td><span class="stagebadge">S2</span></td>
+        <td>多数语言智能体靠少样本提示现成 LLM，性能/鲁棒性/效率受限；「微调智能体」被忽视，且缺轨迹数据。</td>
+        <td>用合成轨迹微调智能体 + 推理轨迹，提升鲁棒性。</td></tr>
+      <tr><td class="n">24</td><td>AgentOhana</td><td><span class="tag traj">轨迹生成</span></td><td><span class="stagebadge">S2</span></td>
+        <td>多源智能体数据高度异构（多轮轨迹格式不一），难统一用于训练；来源均衡与跨设备随机性未处理好。</td>
+        <td>标准化多源轨迹格式，统一联合训练。</td></tr>
+      <tr><td class="n">25</td><td>AutoAct</td><td><span class="tag traj">轨迹生成</span></td><td><span class="stagebadge">S2</span></td>
+        <td>智能体学习依赖昂贵不可复现标注，或依赖闭源模型（GPT-4）合成规划轨迹；单模型难担多职能。</td>
+        <td>自动化分工（规划/工具/反思）自造轨迹，不靠闭源模型、不靠大量标注。</td></tr>
+      <tr><td class="n">26</td><td>Simia</td><td><span class="tag syn">环境生成</span></td><td><span class="stagebadge">S1</span><span class="stagebadge">S2</span></td>
+        <td>训练依赖为特定任务手工搭模拟台，成本高、易碎、难扩展；开放真实任务中表现脆弱。</td>
+        <td>LLM 自当环境模拟器（Simia-SFT 轨迹合成 + Simia-RL 在模拟反馈里做 RL）。</td></tr>
+      <tr><td class="n">27</td><td>Terminal-Bench</td><td><span class="tag bench">基准测评</span></td><td><span class="stagebadge">S4</span></td>
+        <td>缺在真实可复现 CLI 环境里对长时域自主行动（软件工程/科研/安全/ML）的严格评测。</td>
+        <td>Docker 沙箱 CLI + 89 个三人核验任务 + 程序化验证（pass@1）。</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ============ 上云服务智能体 方法集合 ============ -->
+  <h2>四、「上云服务智能体」训练 · 问题→方法集合</h2>
+  <p class="lead">「上云服务智能体」指操作云基础设施的 LLM 智能体：部署服务、编写/执行 IaC（Terraform 等）、调用云 CLI/API、做资源管理与故障排查（对应 CloudEmu / Azure Copilot / AWS DevOps Agent 的目标）。下表给出其训练全流程中最可能出现的 6 类问题，及可直用的四方法维度与论文。</p>
+  <table>
+    <thead><tr>
+      <th style="width:20%">上云智能体训练问题</th><th style="width:14%">推荐方法维度</th>
+      <th style="width:30%">直接可用论文（站内 #）</th><th style="width:36%">落地要点</th>
+    </tr></thead>
+    <tbody>
+      <tr><td><span class="prob">C1 建训练环境</span>：真实云上跑部署/运维任务贵、危险、不可复现</td>
+        <td><span class="tag syn">环境生成</span><br><span class="tag reuse">环境复用</span></td>
+        <td>4 CloudEmu · 1 EnvCraft · 17 Agent-World · 5 EnvHarness · 2 Terminal-Universe（亦可复用 CloudSim / SimGrid 等经典云模拟器）</td>
+        <td>用 CloudEmu 范式「读文档自动造云模拟器 + 真云 oracle 自测」；以 EnvHarness / Terminal-Universe 复用已有 harness 与终端轨迹；复刻经典云模拟器作低成本底座。</td></tr>
+      <tr><td><span class="prob">C2 造部署/运维轨迹</span>：真实运维任务轨迹稀缺、闭源合成不可复现</td>
+        <td><span class="tag traj">轨迹生成</span><br><span class="tag syn">环境生成</span></td>
+        <td>25 AutoAct · 21 Self-Instruct · 23 FireAct · 24 AgentOhana · 10 ESAT · 26 Simia</td>
+        <td>AutoAct 自动化分工自造规划/工具/反思轨迹（不靠 GPT-4）；Self-Instruct/FireAct 造指令与微调轨迹；ESAT 解耦环境-数据自动造 API 多步轨迹；Simia-SFT 在模拟器里合成轨迹。</td></tr>
+      <tr><td><span class="prob">C3 训练奖励</span>：部署成功/失败难自动判定，奖励稀疏</td>
+        <td><span class="tag traj">轨迹生成</span><br><span class="tag syn">环境生成</span></td>
+        <td>9 RLSVR/SpyRL · 8 Agentic Game Dev · 26 Simia · 1 EnvCraft</td>
+        <td>用可验证奖励（RLVR）扩展「可判定域」；以编译/测试/运行时等可执行反馈替代模糊奖励；用世界模型 rollout 提供密集训练信号（Simia-RL）。</td></tr>
+      <tr><td><span class="prob">C4 评测</span>：缺云运维 CLI / 长时域严格评测，易过拟合</td>
+        <td><span class="tag bench">基准测评</span></td>
+        <td>27 Terminal-Bench · 14 τ-bench · 13 WebArena · 15 OSWorld · 11 AgentBench</td>
+        <td>Terminal-Bench 做 Docker 内 CLI 程序化验证；τ-bench 测「用户交互 + 领域规则」；把 WebArena/OSWorld 适配运维场景；AgentBench 做多维横向对比。</td></tr>
+      <tr><td><span class="prob">C5 部署对齐</span>：仿真-真实差距（sim-to-real），部署后漂移</td>
+        <td><span class="tag syn">环境生成</span><br><span class="tag reuse">环境复用</span><br><span class="tag bench">基准测评</span></td>
+        <td>4 CloudEmu · （KIS-S / gCloudSim 真实监控对齐）· 11 AgentBench（真机对照）</td>
+        <td>CloudEmu 真云 oracle 自测自愈缩小差距；沿用 KIS-S / gCloudSim「用 Prometheus/DCGM 监控无缝迁移」做 sim-to-real 对齐；上线后持续真机对照评测。</td></tr>
+      <tr><td><span class="prob">C6 环境随时间过时</span>：云 API 持续演进，静态环境迅速失效</td>
+        <td><span class="tag syn">环境生成</span></td>
+        <td>3 Environment Evolution · 6 SPADE · 4 CloudEmu（文档驱动自愈）</td>
+        <td>Environment Evolution 让难度随模型演化；SPADE 自扩展目标池；CloudEmu 依赖云文档自动更新模拟器，避免手动维护。</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">一句话总结：把「上云服务智能体」的训练看成一条流水线——<b>环境生成 + 环境复用</b> 解决「没地方练」（C1/C5/C6），<b>轨迹生成</b> 解决「没数据练、练歪了」（C2/C3），<b>基准测评</b> 解决「练得行不行、上线会不会翻车」（C4/C5）。四方法维度不是并列工序，而是对同一条流水线的不同补强视角。</div>
+
+  <footer>
+    数据来源：本图谱基于「数据模拟文献调研」站内 27 篇论文（环境生成 12 · 轨迹生成 7 · 环境复用 2 · 基准测评 6）的「五问」解读整理。
+    方法维度命名与站内分类对应：环境生成 = 环境合成；轨迹生成 = 轨迹生成；环境复用 = 环境复用；基准测评 = 基准测试。
+    生成日期：2026-09-27。
+  </footer>
+
+</div>
+</body>
+</html>
